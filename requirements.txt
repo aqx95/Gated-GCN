@@ -1,0 +1,2 @@
+# install dependencies
+dgl==0.4.3.post2
