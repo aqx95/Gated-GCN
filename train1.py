@@ -12,9 +12,9 @@ class args:
     dropout = 0.4
     n_hidden = 500
     gpu = 0
-    lr = 0.01
+    lr = 0.001
     n_bases = 100
-    n_layers = 1
+    n_layers = 2
     n_epochs = 200
     dataset='FB15k-237'
     eval_batch_size = 500
@@ -134,9 +134,9 @@ for epoch in range(args.n_epochs):
 
     t0 = time.time()
     pred = model(g, node_feat, edge_feat, node_norm, edge_norm, data)
-    loss = model.get_loss(pred, labels)
+    t_loss = model.get_loss(pred, labels)
     t1 = time.time()
-    loss.backward()
+    t_loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_norm) # clip gradients
     optimizer.step()
     t2 = time.time()
@@ -146,10 +146,9 @@ for epoch in range(args.n_epochs):
     forward_time.append(t1 - t0)
     backward_time.append(t2 - t1)
     print("Epoch {:04d} | Loss {:.4f} | Best MRR {:.4f} | Forward {:.4f}s | Backward {:.4f}s".
-          format(epoch, loss.item(), best_mrr, forward_time[-1], backward_time[-1]))
+          format(epoch, t_loss.item(), best_mrr, forward_time[-1], backward_time[-1]))
 
     optimizer.zero_grad()
-    scheduler.step(loss)
     del g, node_feat, edge_feat
 
     # validation
@@ -180,3 +179,5 @@ for epoch in range(args.n_epochs):
                         valid_node_norm,valid_edge_norm, valid_data)
         loss = model.get_loss(pred, valid_labels)
         print("Epoch {:04d} | Loss {:.4f} |".format(epoch, loss.item()))
+
+    scheduler.step(loss)
