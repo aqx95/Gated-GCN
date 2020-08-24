@@ -4,11 +4,15 @@ from torch.multiprocessing import Queue
 import dgl
 
 
-def calc_mrr(embedding, train_triplets, valid_triplets, test_triplets, hits=[], eval_bz=100, eval_p="filtered"):
+def calc_mrr(model, train_triplets, valid_triplets, test_triplets,
+            test_graph, test_node_feat, test_edge_feat, test_node_norm, test_edge_norm,
+            hits=[], eval_bz=100, eval_p="filtered"):
     if eval_p == "filtered":
-        mrr = calc_filtered_mrr(embedding, train_triplets, valid_triplets, test_triplets, hits)
+        mrr = calc_filtered_mrr(model, train_triplets, valid_triplets, test_triplets,
+                                hits, test_graph, test_node_feat,
+                                test_edge_feat, test_node_norm,test_edge_norm)
     else:
-        mrr = calc_raw_mrr(embedding, test_triplets, hits, eval_bz)
+        mrr = calc_raw_mrr(model, test_triplets, hits, eval_bz)
     return mrr
 
 
@@ -94,7 +98,9 @@ def filter_s(triplets_to_filter, target_s, target_r, target_o, num_entities):
             filtered_s.append(s)
     return torch.LongTensor(filtered_s)
 
-def perturb_filter_o(model, s, r, o, test_size, triplets_to_filter, num_entities):
+def perturb_filter_o(model, s, r, o, test_size, triplets_to_filter,
+                    num_entities, test_graph, test_node_feat,
+                    test_edge_feat, test_node_norm,test_edge_norm):
     """ Perturb object in the triplets
     """
     ranks = []
@@ -116,47 +122,59 @@ def perturb_filter_o(model, s, r, o, test_size, triplets_to_filter, num_entities
         ranks.append(rank)
     return torch.LongTensor(ranks)
 
-def perturb_filter_s(model, s, r, o, test_size, triplets_to_filter, num_entities):
+def perturb_filter_s(model, s, r, o, test_size, triplets_to_filter,
+                    num_entities, test_graph, test_node_feat,
+                    test_edge_feat, test_node_norm,test_edge_norm):
     """ Perturb subject in the triplets
     """
     ranks = []
     for idx in range(test_size):
-        if idx % 1000 == 0:
+        if idx % 10 == 0:
             print("test triplet {} / {}".format(idx, test_size))
         target_s = s[idx]
         target_r = r[idx]
         target_o = o[idx]
         filtered_s = filter_s(triplets_to_filter, target_s, target_r, target_o, num_entities)
-        target_s_idx = int((filtered_s == target_s).nonzero()) #index of test triplet
+        target_s_idx = torch.nonzero((filtered_s == target_s)).item() #index of test triplet
         target_r = torch.LongTensor(np.tile(target_r,(filtered_s.size()[0],1)))
         target_o = torch.LongTensor(np.tile(target_o,(filtered_s.size()[0],1)))
         filtered_s = torch.unsqueeze(filtered_s,1)
-        print(target_r.size())
-        print(filtered_s)
-        emb_s = embedding[filtered_s]
-        emb_r = w[target_r]
-        emb_o = embedding[target_o]
+        testing_triplet = torch.cat([filtered_s, target_r, target_o], dim=1)
+
+        pred = model(test_graph, test_node_feat, test_edge_feat,
+                    test_node_norm,test_edge_norm, testing_triplet)
+
+        # emb_s = embedding[filtered_s]
+        # emb_r = w[target_r]
+        # emb_o = embedding[target_o]
         #emb_triplet = emb_s * emb_r * emb_o
-        scores = torch.sigmoid(torch.sum(emb_triplet, dim=1))
+        #scores = torch.sigmoid(torch.sum(emb_triplet, dim=1))
+        scores = torch.sigmoid(pred)
         _, indices = torch.sort(scores, descending=True)
         rank = int((indices == target_s_idx).nonzero())
         ranks.append(rank)
     return torch.LongTensor(ranks)
 
-def calc_filtered_mrr(model, train_triplets, valid_triplets, test_triplets, hits=[]):
+def calc_filtered_mrr(model, train_triplets, valid_triplets, test_triplets,
+                    hits, test_graph, test_node_feat,
+                    test_edge_feat, test_node_norm,test_edge_norm):
     with torch.no_grad():
         s = test_triplets[:, 0]
         r = test_triplets[:, 1]
         o = test_triplets[:, 2]
-        num_entities = train_triplets.shape[0]
+        num_entities = test_node_feat.shape[0]
         test_size = test_triplets.shape[0]
 
         triplets_to_filter = torch.cat([train_triplets, valid_triplets, test_triplets]).tolist()
         triplets_to_filter = {tuple(triplet) for triplet in triplets_to_filter}
         print('Perturbing subject...')
-        ranks_s = perturb_filter_s(model, s, r, o, test_size, triplets_to_filter, num_entities)
+        ranks_s = perturb_filter_s(model, s, r, o, test_size, triplets_to_filter,
+                                num_entities, test_graph, test_node_feat,
+                                test_edge_feat, test_node_norm,test_edge_norm)
         print('Perturbing object...')
-        ranks_o = perturb_filter_o(model, s, r, o, test_size, triplets_to_filter, num_entities)
+        ranks_o = perturb_filter_o(model, s, r, o, test_size, triplets_to_filter,
+                                num_entities, test_graph, test_node_feat,
+                                test_edge_feat, test_node_norm,test_edge_norm)
 
         ranks = torch.cat([ranks_s, ranks_o])
         ranks += 1 # change to 1-indexed
