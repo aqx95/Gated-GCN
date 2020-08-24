@@ -26,9 +26,9 @@ class GatedGCN_MLP(nn.Module):
                                                 self.residual) for _ in range(self.n_layers)])
 
         self.dropout = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(2*out_dim, 200)
-        self.bn1 = nn.BatchNorm1d(num_features=200)
-        self.output = nn.Linear(200, 1)
+        self.fc1 = nn.Linear(2*out_dim, 1000)
+        self.bn1 = nn.BatchNorm1d(num_features=1000)
+        self.output = nn.Linear(1000, 237)
 
     def forward(self, g, node_id, edge_type, norm_n, norm_e, triplets):
         h = self.linear_h(node_id)
@@ -47,8 +47,8 @@ class GatedGCN_MLP(nn.Module):
         fc1 = self.dropout(fc1)
         outputs = self.output(fc1)
 
-        return h, outputs
+        return outputs
 
     def get_loss(self, predictions, labels):
-        predict_loss = F.binary_cross_entropy_with_logits(predictions, labels)
+        predict_loss = nn.CrossEntropyLoss()(predictions, labels)
         return predict_loss
