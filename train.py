@@ -9,8 +9,8 @@ from graphdata import DGLData
 from model.RGCN import LinkPredict
 from model.GATEDGCN import GatedGCN
 from model.GATED_MLP import GatedGCN_MLP
-import timezz
-import utilities.evaluator as eval
+import time
+import utilities.metrics as eval
 import matplotlib.pyplot as plt
 
 def set_seed(seed):

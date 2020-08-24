@@ -2,8 +2,8 @@ import os
 from data import LinkDataset
 import numpy as np
 import torch
-from graphdata import DGLData
-from model.GATEDGCN import GatedGCN
+from graphdata1 import DGLData
+from model.GATED_MLP import GatedGCN_MLP
 import time
 import random
 from utilities import utils, metrics
@@ -15,7 +15,7 @@ class args:
     lr = 0.01
     n_bases = 100
     n_layers = 1
-    n_epochs = 400
+    n_epochs = 200
     dataset='FB15k-237'
     eval_batch_size = 500
     eval_protocol = 'filtered'
@@ -24,7 +24,7 @@ class args:
     graph_batch_size = 30000
     graph_split_size = 0.5
     negative_sample = 5
-    eval_every= 1000
+    eval_every= 100
     edge_sampler = 'uniform'
 
 def set_seed(seed):
@@ -43,6 +43,7 @@ valid_data = data.valid
 test_data = data.test
 num_nodes = data.num_nodes
 num_rels = data.num_rels
+
 
 # validation and testing triplets
 valid_data = torch.LongTensor(valid_data)
@@ -66,7 +67,7 @@ test_rel = torch.from_numpy(test_rel)
 
 train_dgl = DGLData(train_data, num_nodes, num_rels)
 
-model = GatedGCN(num_nodes,
+model = GatedGCN_MLP(num_nodes,
                 in_dim_edge=num_rels,
                 hid_dim=args.n_hidden,
                 out_dim=args.n_hidden,
@@ -94,15 +95,15 @@ best_mrr = 0
 for epoch in range(args.n_epochs):
     model.train()
     epoch += 1
-    g, node_id, edge_type, data, labels =train_dgl.prepare_train(30000,0.5,10)
+    g, node_id, edge_type, data = train_dgl.prepare_train(30000,0.5,10)
 
+    labels = torch.LongTensor(data[:,1])
     node_id = torch.from_numpy(node_id)
     edge_type = torch.from_numpy(edge_type)
-    data, labels = torch.from_numpy(data), torch.from_numpy(labels)
+    data = torch.from_numpy(data)
     deg = g.in_degrees(range(g.number_of_nodes())).float().view(-1, 1)
     if use_cuda:
-        deg = deg.cuda()
-        data, labels = data.cuda(), labels.cuda()
+        deg, data, labels = deg.cuda(), data.cuda(), labels.cuda()
         g = g.to(args.gpu)
 
     #Set node and edge features
@@ -124,7 +125,7 @@ for epoch in range(args.n_epochs):
 
     t0 = time.time()
     pred = model(g, node_feat, edge_feat, node_norm, edge_norm, data)
-    loss = model.get_loss(pred.squeeze(), labels)
+    loss = model.get_loss(pred, labels)
     t1 = time.time()
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_norm) # clip gradients
@@ -141,7 +142,7 @@ for epoch in range(args.n_epochs):
     del g, node_feat, edge_feat
 
     # validation
-    if epoch % args.eval_every == 2:
+    if epoch % args.eval_every == 0:
         #Set node and edge features
         test_node_feat = np.zeros((test_graph.number_of_nodes(), num_nodes))
         test_node_feat[np.arange(test_graph.number_of_nodes()), test_node_id] = 1.0
@@ -165,5 +166,7 @@ for epoch in range(args.n_epochs):
             pred = model(test_graph, test_node_feat, test_edge_feat,
                             test_node_norm,test_edge_norm, test_data)
             mrr = metrics.calc_mrr(model, torch.LongTensor(train_data),
-                                 valid_data, test_data, hits=[1, 3, 10], eval_bz=args.eval_batch_size,
+                                 valid_data, test_data, test_graph, test_node_feat,
+                                 test_edge_feat, test_node_norm,test_edge_norm,
+                                 hits=[1, 3, 10], eval_bz=args.eval_batch_size,
                                  eval_p=args.eval_protocol)
