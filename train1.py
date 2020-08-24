@@ -67,6 +67,15 @@ test_rel = torch.from_numpy(test_rel)
 
 train_dgl = DGLData(train_data, num_nodes, num_rels)
 
+#validation
+valid_dgl = DGLData(train_data, num_nodes, num_rels)
+valid_graph, valid_rel = valid_dgl.prepare_test()
+valid_deg = valid_graph.in_degrees(
+            range(valid_graph.number_of_nodes())).float().view(-1,1)
+valid_node_id = torch.arange(0, num_nodes, dtype=torch.long)
+valid_rel = torch.from_numpy(valid_rel)
+valid_labels = valid_data[:,1]
+
 model = GatedGCN_MLP(num_nodes,
                 in_dim_edge=num_rels,
                 hid_dim=args.n_hidden,
@@ -132,6 +141,8 @@ for epoch in range(args.n_epochs):
     optimizer.step()
     t2 = time.time()
 
+
+
     forward_time.append(t1 - t0)
     backward_time.append(t2 - t1)
     print("Epoch {:04d} | Loss {:.4f} | Best MRR {:.4f} | Forward {:.4f}s | Backward {:.4f}s".
@@ -142,31 +153,30 @@ for epoch in range(args.n_epochs):
     del g, node_feat, edge_feat
 
     # validation
-    if epoch % args.eval_every == 0:
+    # if epoch % args.eval_every == 0:
         #Set node and edge features
-        test_node_feat = np.zeros((test_graph.number_of_nodes(), num_nodes))
-        test_node_feat[np.arange(test_graph.number_of_nodes()), test_node_id] = 1.0
-        test_node_feat = torch.FloatTensor(test_node_feat)
+    valid_node_feat = np.zeros((valid_graph.number_of_nodes(), num_nodes))
+    valid_node_feat[np.arange(valid_graph.number_of_nodes()), valid_node_id] = 1.0
+    valid_node_feat = torch.FloatTensor(valid_node_feat)
 
-        test_edge_feat = np.zeros((test_graph.number_of_edges(), num_rels))
-        test_edge_feat[np.arange(test_graph.number_of_edges()), test_rel] = 1.0
-        test_edge_feat = torch.FloatTensor(test_edge_feat)
+    valid_edge_feat = np.zeros((valid_graph.number_of_edges(), num_rels))
+    valid_edge_feat[np.arange(valid_graph.number_of_edges()), valid_rel] = 1.0
+    valid_edge_feat = torch.FloatTensor(valid_edge_feat)
 
-        #norm
-        test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
-        test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
+    #norm
+    valid_node_norm = 1./((valid_graph.number_of_nodes())**0.5)
+    valid_edge_norm = 1./((valid_graph.number_of_edges())**0.5)
 
-        if use_cuda:
-            test_node_feat = test_node_feat.cuda()
-            test_edge_feat = test_edge_feat.cuda()
+    if use_cuda:
+        valid_node_feat = valid_node_feat.cuda()
+        valid_edge_feat = valid_edge_feat.cuda()
+        valid_data = valid_data.cuda()
+        valid_labels = valid_labels.cuda()
 
-        model.eval()
-        print("start eval")
-        with torch.no_grad():
-            pred = model(test_graph, test_node_feat, test_edge_feat,
-                            test_node_norm,test_edge_norm, test_data)
-            mrr = metrics.calc_mrr(model, torch.LongTensor(train_data),
-                                 valid_data, test_data, test_graph, test_node_feat,
-                                 test_edge_feat, test_node_norm,test_edge_norm,
-                                 hits=[1, 3, 10], eval_bz=args.eval_batch_size,
-                                 eval_p=args.eval_protocol)
+    model.eval()
+    print("start eval")
+    with torch.no_grad():
+        pred = model(valid_graph, valid_node_feat, valid_edge_feat,
+                        valid_node_norm,valid_edge_norm, valid_data)
+        loss = model.get_loss(pred, valid_labels)
+        print("Epoch {:04d} | Loss {:.4f} |".format(epoch, loss.item()))
