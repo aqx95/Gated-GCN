@@ -1,18 +1,15 @@
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.multiprocessing import Queue
 import dgl
 
 
-def calc_mrr(model, train_triplets, valid_triplets, test_triplets,
-            test_graph, test_node_feat, test_edge_feat, test_node_norm, test_edge_norm,
-            hits=[], eval_bz=100, eval_p="filtered"):
+def calc_mrr(embedding, w, train_triplets, valid_triplets, test_triplets, hits=[], eval_bz=100, eval_p="filtered"):
     if eval_p == "filtered":
-        mrr = calc_filtered_mrr(model, train_triplets, valid_triplets, test_triplets,
-                                hits, test_graph, test_node_feat,
-                                test_edge_feat, test_node_norm,test_edge_norm)
+        mrr = calc_filtered_mrr(embedding, w, train_triplets, valid_triplets, test_triplets, hits)
     else:
-        mrr = calc_raw_mrr(model, test_triplets, hits, eval_bz)
+        mrr = calc_raw_mrr(embedding, w, test_triplets, hits, eval_bz)
     return mrr
 
 
@@ -98,14 +95,13 @@ def filter_s(triplets_to_filter, target_s, target_r, target_o, num_entities):
             filtered_s.append(s)
     return torch.LongTensor(filtered_s)
 
-def perturb_filter_o(model, s, r, o, test_size, triplets_to_filter,
-                    num_entities, test_graph, test_node_feat,
-                    test_edge_feat, test_node_norm,test_edge_norm):
+def perturb_o_and_get_filtered_rank(embedding, w, s, r, o, test_size, triplets_to_filter):
     """ Perturb object in the triplets
     """
+    num_entities = embedding.shape[0]
     ranks = []
     for idx in range(test_size):
-        if idx % 1000 == 0:
+        if idx % 100 == 0:
             print("test triplet {} / {}".format(idx, test_size))
         target_s = s[idx]
         target_r = r[idx]
@@ -113,68 +109,51 @@ def perturb_filter_o(model, s, r, o, test_size, triplets_to_filter,
         filtered_o = filter_o(triplets_to_filter, target_s, target_r, target_o, num_entities)
         target_o_idx = int((filtered_o == target_o).nonzero())
         emb_s = embedding[target_s]
-        #emb_r = w[target_r]
+        emb_r = w[target_r]
         emb_o = embedding[filtered_o]
-        #emb_triplet = emb_s * emb_r * emb_o
+        emb_triplet = emb_s * emb_r * emb_o
         scores = torch.sigmoid(torch.sum(emb_triplet, dim=1))
         _, indices = torch.sort(scores, descending=True)
         rank = int((indices == target_o_idx).nonzero())
         ranks.append(rank)
     return torch.LongTensor(ranks)
 
-def perturb_filter_s(model, s, r, o, test_size, triplets_to_filter,
-                    num_entities, test_graph, test_node_feat,
-                    test_edge_feat, test_node_norm,test_edge_norm):
+def perturb_s_and_get_filtered_rank(embedding, w, s, r, o, test_size, triplets_to_filter):
     """ Perturb subject in the triplets
     """
+    num_entities = embedding.shape[0]
     ranks = []
     for idx in range(test_size):
-        if idx % 10 == 0:
+        if idx % 100 == 0:
             print("test triplet {} / {}".format(idx, test_size))
         target_s = s[idx]
         target_r = r[idx]
         target_o = o[idx]
         filtered_s = filter_s(triplets_to_filter, target_s, target_r, target_o, num_entities)
-        target_s_idx = torch.nonzero((filtered_s == target_s)).item() #index of test triplet
-        target_r = torch.LongTensor(np.tile(target_r,(filtered_s.size()[0],1)))
-        target_o = torch.LongTensor(np.tile(target_o,(filtered_s.size()[0],1)))
-        filtered_s = torch.unsqueeze(filtered_s,1)
-        testing_triplet = torch.cat([filtered_s, target_r, target_o], dim=1)
-
-        pred = model(test_graph, test_node_feat, test_edge_feat,
-                    test_node_norm,test_edge_norm, testing_triplet)
-
-        # emb_s = embedding[filtered_s]
-        # emb_r = w[target_r]
-        # emb_o = embedding[target_o]
-        #emb_triplet = emb_s * emb_r * emb_o
-        #scores = torch.sigmoid(torch.sum(emb_triplet, dim=1))
-        scores = torch.sigmoid(pred)
+        target_s_idx = int((filtered_s == target_s).nonzero())
+        emb_s = embedding[filtered_s]
+        emb_r = w[target_r]
+        emb_o = embedding[target_o]
+        emb_triplet = emb_s * emb_r * emb_o
+        scores = torch.sigmoid(torch.sum(emb_triplet, dim=1))
         _, indices = torch.sort(scores, descending=True)
         rank = int((indices == target_s_idx).nonzero())
         ranks.append(rank)
     return torch.LongTensor(ranks)
 
-def calc_filtered_mrr(model, train_triplets, valid_triplets, test_triplets,
-                    hits, test_graph, test_node_feat,
-                    test_edge_feat, test_node_norm,test_edge_norm):
+def calc_filtered_mrr(embedding, w, train_triplets, valid_triplets, test_triplets, hits=[]):
     with torch.no_grad():
         s = test_triplets[:, 0]
         r = test_triplets[:, 1]
         o = test_triplets[:, 2]
-        num_entities = test_node_feat.shape[0]
         test_size = test_triplets.shape[0]
 
         triplets_to_filter = torch.cat([train_triplets, valid_triplets, test_triplets]).tolist()
         triplets_to_filter = {tuple(triplet) for triplet in triplets_to_filter}
         print('Perturbing subject...')
-        ranks_s = perturb_filter_s(model, s, r, o, test_size, triplets_to_filter,
-                                num_entities, test_graph, test_node_feat,
-                                test_edge_feat, test_node_norm,test_edge_norm)
+        ranks_s = perturb_s_and_get_filtered_rank(embedding, w, s, r, o, test_size, triplets_to_filter)
         print('Perturbing object...')
-        ranks_o = perturb_filter_o(model, s, r, o, test_size, triplets_to_filter,
-                                num_entities, test_graph, test_node_feat,
-                                test_edge_feat, test_node_norm,test_edge_norm)
+        ranks_o = perturb_o_and_get_filtered_rank(embedding, w, s, r, o, test_size, triplets_to_filter)
 
         ranks = torch.cat([ranks_s, ranks_o])
         ranks += 1 # change to 1-indexed
@@ -186,3 +165,19 @@ def calc_filtered_mrr(model, train_triplets, valid_triplets, test_triplets,
             avg_count = torch.mean((ranks <= hit).float())
             print("Hits (filtered) @ {}: {:.6f}".format(hit, avg_count.item()))
     return mrr.item()
+
+
+def get_mrr(pred, labels, hits = []):
+    soft = nn.Softmax(dim=1)
+    scores = soft(pred)
+    _, indices = torch.sort(scores, descending=True)
+    rank = torch.where((indices == labels))[1] + 1
+
+    #MRR
+    mrr = torch.mean(1.0/rank.float())
+    print('MRR: {}'.format(mrr))
+
+    #Hits
+    for hit in hits:
+        avg_count = torch.mean((rank <= hit).float())
+        print("Hits @ {}: {:.6f}".format(hit,avg_count.item()))
