@@ -29,7 +29,7 @@ class GatedGCN(nn.Module):
         nn.init.xavier_uniform_(self.w_relation, gain=nn.init.calculate_gain('relu'))
 
 
-    def forward(self, g, node_id, edge_type, norm_n, norm_e, triplets):
+    def forward(self, g, node_id, edge_type, norm_n, norm_e):
         h = self.linear_h(node_id)
         e = self.linear_e(edge_type)
 
@@ -37,17 +37,19 @@ class GatedGCN(nn.Module):
         for conv in self.layers:
             h, e = conv(g, h, e, norm_n, norm_e)
 
-        #distmult
-        s = h[triplets[:,0]]
-        r = self.w_relation[triplets[:,1]]
-        o = h[triplets[:,2]]
-        score = torch.sum(s * r * o, dim=1)
-        return score
+        return h
+
+
 
 
     def regularization_loss(self, embedding):
         return torch.mean(embedding.pow(2)) + torch.mean(self.w_relation.pow(2))
 
-    def get_loss(self, score, labels):
+    def get_loss(self, embed, triplets, labels):
+        #distmult
+        s = embed[triplets[:,0]]
+        r = self.w_relation[triplets[:,1]]
+        o = embed[triplets[:,2]]
+        score = torch.sum(s * r * o, dim=1)
         predict_loss = F.binary_cross_entropy_with_logits(score, labels)
         return predict_loss
