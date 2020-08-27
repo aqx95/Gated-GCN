@@ -62,8 +62,7 @@ test_deg = test_graph.in_degrees(
             range(test_graph.number_of_nodes())).float().view(-1,1)
 test_node_id = torch.arange(0, num_nodes, dtype=torch.long)
 test_rel = torch.from_numpy(test_rel)
-
-
+test_labels = test_data[:,1].unsqueeze(dim=1)
 
 train_dgl = DGLData(train_data, num_nodes, num_rels)
 
@@ -179,5 +178,7 @@ for epoch in range(args.n_epochs):
                         valid_node_norm,valid_edge_norm, valid_data)
         loss = model.get_loss(pred, valid_labels)
         print("Epoch {:04d} | Loss {:.4f} |".format(epoch, loss.item()))
+
+        metrics.get_mrr(pred, valid_labels.unsqueeze(dim=1), hits=[1,3,10])
 
     scheduler.step(loss)
