@@ -21,24 +21,26 @@ class GatedGCN_MLP(nn.Module):
         self.linear_h = nn.Linear(in_dim, hid_dim)
         self.linear_e = nn.Linear(in_dim_edge, hid_dim)
 
-        self.layers = nn.ModuleList([GatedGCNLayer(hid_dim, out_dim, dropout,
-                                                self.graph_norm, self.batch_norm,
-                                                self.residual) for _ in range(self.n_layers)])
+        self.layers = nn.ModuleList([GatedGCNLayer(self.hid_dim, self.hid_dim,
+                                        self.dropout, self.graph_norm, self.batch_norm,
+                                        self.residual) for _ in range(self.n_layers)])
 
         self.dropout = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(2*out_dim, 1000)
+        self.fc1 = nn.Linear(2*self.hid_dim, 1000)
         self.bn1 = nn.BatchNorm1d(num_features=1000)
-        self.output = nn.Linear(1000, 237)
+        self.output = nn.Linear(1000, self.out_dim)
 
-    def forward(self, g, node_id, edge_type, norm_n, norm_e, triplets):
-        h = self.linear_h(node_id)
-        e = self.linear_e(edge_type)
+
+    def forward(self, g, norm_n, norm_e, triplets):
+
+        h = self.linear_h(g.ndata['node_feat'])
+        e = self.linear_e(g.edata['edge_feat'])
 
         #convolution
         for conv in self.layers:
             h,e = conv(g, h, e, norm_n, norm_e)
 
-        #FC layer
+        # #FC layer
         s = h[triplets[:,0]]
         o = h[triplets[:,2]]
         conv_map = torch.cat((s,o), dim=1)
@@ -48,6 +50,7 @@ class GatedGCN_MLP(nn.Module):
         outputs = self.output(fc1)
 
         return outputs
+
 
     def get_loss(self, predictions, labels):
         predict_loss = nn.CrossEntropyLoss()(predictions, labels)

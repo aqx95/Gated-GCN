@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch
-from utilities import utils
+from utilities import io
 
 class LinkDataset(object):
     def __init__(self, name):
@@ -11,18 +11,17 @@ class LinkDataset(object):
         self.entity_path = os.path.join(self.data_dir, 'entities.dict')
 
 
-
     def load_data(self):
         train_path = os.path.join(self.data_dir, 'train.txt')
         valid_path = os.path.join(self.data_dir, 'valid.txt')
         test_path = os.path.join(self.data_dir, 'test.txt')
         # Map entity and relation to integers
-        entity_dict = utils.read_dict(self.entity_path)
-        relation_dict = utils.read_dict(self.relation_path)
+        entity_dict = io.read_dict(self.entity_path)
+        relation_dict = io.read_dict(self.relation_path)
         # Return triplets as array
-        self.train = np.asarray(utils.read_trip_lst(train_path, entity_dict, relation_dict))
-        self.valid = np.asarray(utils.read_trip_lst(valid_path, entity_dict, relation_dict))
-        self.test = np.asarray(utils.read_trip_lst(test_path, entity_dict, relation_dict))
+        self.train = np.asarray(io.read_trip_lst(train_path, entity_dict, relation_dict))
+        self.valid = np.asarray(io.read_trip_lst(valid_path, entity_dict, relation_dict))
+        self.test = np.asarray(io.read_trip_lst(test_path, entity_dict, relation_dict))
         #Return number of nodes and relation
         self.num_nodes = len(entity_dict)
         self.num_rels = len(relation_dict)

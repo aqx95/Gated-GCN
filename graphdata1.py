@@ -9,7 +9,7 @@ class DGLData(Dataset):
         self.num_nodes = num_nodes
         self.num_rel = num_rel
 
-    def prepare_train(self, sample_size, split_size, neg_rate, sampler='uniform'):
+    def prep_train_graph(self, sample_size, split_size, neg_rate, sampler='uniform'):
         adj_list, degrees = get_adj_and_degrees(self.num_nodes, self.triplets)
 
         if sampler == 'uniform':
@@ -24,20 +24,22 @@ class DGLData(Dataset):
         src, dst = np.reshape(edges, (2, -1))
         relabeled_edges = np.stack((src, rel, dst)).transpose()
 
-        # build DGL graph
-        print("# sampled nodes: {}".format(len(uniq_v)))
-        print("# sampled edges: {}".format(len(src)))
-        g, rel = build_graph(len(uniq_v), self.num_rel,
-                                    (src, rel, dst))
+        uniq_v = torch.from_numpy(uniq_v)
+        rel = torch.from_numpy(rel)
+        g = build_graph(len(uniq_v), (src, rel, dst))
+        g = get_graph_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
 
-        return g, uniq_v, rel, relabeled_edges
+        return g, relabeled_edges
 
-    def prepare_test(self):
+    def prep_test_graph(self):
         src, rel, dst = self.triplets.transpose()
-        return build_graph(self.num_nodes, self.num_rel, (src,rel,dst))
+        g = build_graph(self.num_nodes, (src,rel,dst))
+        #Set node and edge features
+        node_id = torch.arange(0, self.num_nodes, dtype=torch.long)
+        rel = torch.from_numpy(rel)
+        g = get_graph_feat(g, self.num_nodes, self.num_rel, node_id, rel)
 
-
-
+        return g
 
 if __name__ == '__main__':
     DGLData

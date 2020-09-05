@@ -1,32 +1,6 @@
 import numpy as np
 import dgl
-
-# Retreive mapping for entities/relationd dict
-def read_dict(filename):
-    d = {}
-    with open(filename,'r') as file:
-        for line in file:
-            line = line.strip().split('\t')
-            d[line[1]] = int(line[0])
-    return d
-
-# Map entities/relation to integers
-def read_trip(filename):
-    with open(filename, 'r') as file:
-        for line in file:
-            processed_line = line.strip().split('\t')
-            yield processed_line
-
-# Generate triplets
-def read_trip_lst(filename, entity_dict, relation_dict):
-    lst = []
-    for triplet in read_trip(filename):
-        s = entity_dict[triplet[0]]
-        r = relation_dict[triplet[1]]
-        o = entity_dict[triplet[2]]
-        lst.append([s, r, o])
-    return lst
-
+import torch
 
 ### Graph utilities
 
@@ -101,17 +75,27 @@ def neighbor_sampling(adj_list, degrees, triplets, sample_size):
     return edges
 
 
-def build_graph(num_nodes, num_rels, triplets):
-    g = dgl.DGLGraph()
-    g.add_nodes(num_nodes)
-    src, rel, dst = triplets
-    g.add_edges(src, dst)
+def build_graph(num_nodes, triplets):
+    src, rel, dst = torch.LongTensor(triplets)
+    g = dgl.graph((src, dst))
+    #g.add_nodes(num_nodes)
+    # g.add_edges(src, dst)
     print("# nodes: {}, # edges: {}".format(num_nodes, len(src)))
-    return g, rel.astype('int64')
+    return g
 
-def comp_deg_norm(g):
-    g = g.local_var()
-    in_deg = g.in_degrees(range(g.number_of_nodes())).float().numpy()
-    norm = 1.0 / in_deg
-    norm[np.isinf(norm)] = 0
-    return norm
+
+def get_graph_feat(g, num_nodes, num_edges, node_id, edge_type):
+    """ Set node and edge feature using one-hot encoding """
+    node_feat = np.zeros((g.number_of_nodes(), num_nodes))
+    node_feat[np.arange(g.number_of_nodes()), node_id] = 1.0
+    node_feat = torch.FloatTensor(node_feat)
+
+    edge_feat = np.zeros((g.number_of_edges(), num_edges))
+    edge_feat[np.arange(g.number_of_edges()), edge_type] = 1.0
+    edge_feat = torch.FloatTensor(edge_feat)
+
+    #Add features
+    g.ndata['node_feat'] = node_feat
+    g.edata['edge_feat'] = edge_feat
+
+    return g
