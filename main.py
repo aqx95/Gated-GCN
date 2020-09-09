@@ -51,6 +51,7 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 graph_data = DGLData(train_data, num_nodes, num_rels)
 #Prep test
 test_graph = graph_data.prep_test_graph()
+test_graph = test_graph.to(device)
 test_labels = test_data[:,1].unsqueeze(dim=1)
 #Prep validation
 valid_labels = valid_data[:,1]
