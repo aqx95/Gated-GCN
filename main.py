@@ -66,6 +66,7 @@ model = GatedGCN_MLP(num_nodes,
                 batch_norm=True,
                 residual=True)
 
+
 model = model.to(device)
 
 

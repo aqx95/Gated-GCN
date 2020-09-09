@@ -50,7 +50,8 @@ class Fitter:
         self.model.train()
         g, data = graph_data.prep_train_graph(self.config['graph_obj']['batch_size'],
                                               self.config['graph_obj']['split_size'],
-                                              self.config['graph_obj']['neg_sampling'])
+                                              self.config['graph_obj']['neg_sampling'],
+                                              self.config['graph_obj']['edge_sampler'])
 
         labels = torch.LongTensor(data[:,1])
         g, labels = g.to(self.device), labels.to(self.device)
