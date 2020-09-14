@@ -84,7 +84,7 @@ def build_graph(num_nodes, triplets):
     return g
 
 
-def get_graph_feat(g, num_nodes, num_edges, node_id, edge_type):
+def get_onehot_feat(g, num_nodes, num_edges, node_id, edge_type):
     """ Set node and edge feature using one-hot encoding """
     node_feat = np.zeros((g.number_of_nodes(), num_nodes))
     node_feat[np.arange(g.number_of_nodes()), node_id] = 1.0
@@ -97,5 +97,11 @@ def get_graph_feat(g, num_nodes, num_edges, node_id, edge_type):
     #Add features
     g.ndata['node_feat'] = node_feat
     g.edata['edge_feat'] = edge_feat
+
+    return g
+
+def get_embed_feat(g, num_nodes, num_edges, node_id, edge_type):
+    g.ndata['node_feat'] = node_id
+    g.edata['edge_feat'] = edge_type
 
     return g
