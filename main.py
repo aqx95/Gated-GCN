@@ -82,6 +82,7 @@ test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
 test_data, test_labels = test_data.to(device), test_labels.to(device)
 model.eval()
+
 with torch.no_grad():
     pred_test = model(test_graph, test_node_norm,
                       test_edge_norm, test_data)
