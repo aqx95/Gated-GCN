@@ -9,7 +9,7 @@ class DGLData(Dataset):
         self.num_nodes = num_nodes
         self.num_rel = num_rel
 
-    def prep_train_graph(self, sample_size, split_size, neg_rate, sampler='uniform'):
+    def prep_train_graph(self, sample_size, split_size, neg_rate, sampler='uniform', hot=False):
         adj_list, degrees = get_adj_and_degrees(self.num_nodes, self.triplets)
 
         if sampler == 'uniform':
@@ -27,17 +27,26 @@ class DGLData(Dataset):
         uniq_v = torch.from_numpy(uniq_v)
         rel = torch.from_numpy(rel)
         g = build_graph(len(uniq_v), (src, rel, dst))
-        g = get_graph_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
+        if hot:
+            g = get_onehot_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
+        else:
+            g = get_embed_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
 
         return g, relabeled_edges
 
-    def prep_test_graph(self):
+    def prep_test_graph(self, hot=False):
         src, rel, dst = self.triplets.transpose()
         g = build_graph(self.num_nodes, (src,rel,dst))
         #Set node and edge features
         node_id = torch.arange(0, self.num_nodes, dtype=torch.long)
         rel = torch.from_numpy(rel)
-        g = get_graph_feat(g, self.num_nodes, self.num_rel, node_id, rel)
+        if hot:
+            print('one-hot feature')
+            g = get_onehot_feat(g, self.num_nodes, self.num_rel, node_id, rel)
+        else:
+            print('embed feature')
+            g = get_embed_feat(g, self.num_nodes, self.num_rel, node_id, rel)
+
 
         return g
 

@@ -11,23 +11,25 @@ def prepare_ogb(name):
     train_edge, valid_edge, test_edge = split_edge["train"], split_edge["valid"], split_edge["test"]
     g = dataset[0] # dgl graph object containing only training edges
 
-    num_nodes = g.number_of_nodes()
-    num_rel = int(max(torch.unique(g.edata['edge_reltype'])))+1
-
-    edge_type = g.edata['edge_reltype'].squeeze()
-
-    node_feat = torch.arange(0, num_nodes, dtype=torch.long)
-    edge_feat = np.zeros((g.number_of_edges(), num_rel))
-    edge_feat[np.arange(g.number_of_edges()), edge_type] = 1.0
-    edge_feat = torch.FloatTensor(edge_feat)
-
-    #Add features
-    g.ndata['node_feat'] = node_feat
-    g.edata['edge_feat'] = edge_feat
+    train_data = sample_data(50000, train_edge, True)
+    valid_data = sample_data(50000, valid_edge)
+    test_data = sample_data(50000, test_edge)
 
 
-    return g, train_edge, valid_edge, test_edge, num_nodes, num_rels
+    return g, train_data, valid_data, test_data, num_nodes, num_rels
 
-if __name__ == "__main__":
-    g, train, valid, test, node, rel = prepare_ogb('ogbl-wikikg')
-    print(g)
+
+def sample_data(size, edge, sampling=False):
+    if sampling:
+        sample = np.random.choice(range(edge['head'].size()), size, replace=False)
+        head = edge['head'][sample]
+        relation = edge['relation'][sample]
+        tail = edge['tail'][sample]
+
+    else:
+        head = edge['head']
+        relation = edge['relation']
+        tail = edge['tail']
+
+    stacked = torch.stack((head, relation, tail), dim=0)
+    return torch.transpose(stacked,0,1)

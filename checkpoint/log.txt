@@ -1,0 +1,8 @@
+Begin training with cpu
+Begin training with cpu
+[TRAINING] Epoch 0    Loss: 5.627103328704834
+[VALIDATION] Epoch 0    Loss: 5.1818413734436035
+[TRAINING] Epoch 1    Loss: 5.173093318939209
+Begin training with cpu
+Begin training with cpu
+[TRAINING] Epoch 0    Loss: 5.672626495361328
