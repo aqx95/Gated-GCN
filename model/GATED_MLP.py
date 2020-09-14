@@ -18,6 +18,8 @@ class GatedGCN_MLP(nn.Module):
         self.batch_norm = batch_norm
         self.residual = residual
 
+        self.h_embedding = nn.Embedding(in_dim, hid_dim)
+        self.e_embedding = nn.Embedding(in_dim_edge, hid_dim)
         self.linear_h = nn.Linear(in_dim, hid_dim)
         self.linear_e = nn.Linear(in_dim_edge, hid_dim)
 
@@ -33,8 +35,10 @@ class GatedGCN_MLP(nn.Module):
 
     def forward(self, g, norm_n, norm_e, triplets):
 
-        h = self.linear_h(g.ndata['node_feat'])
-        e = self.linear_e(g.edata['edge_feat'])
+        # h = self.linear_h(g.ndata['node_feat'])
+        # e = self.linear_e(g.edata['edge_feat'])
+        h = self.h_embedding(g.ndata['node_feat'])
+        e = self.e_embedding(g.edata['edge_feat'])
 
         #convolution
         for conv in self.layers:
