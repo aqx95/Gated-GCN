@@ -77,9 +77,10 @@ def neighbor_sampling(adj_list, degrees, triplets, sample_size):
 
 def build_graph(num_nodes, triplets):
     src, rel, dst = torch.LongTensor(triplets)
-    g = dgl.graph((src, dst))
-    #g.add_nodes(num_nodes)
-    # g.add_edges(src, dst)
+    #g = dgl.graph((src, dst))
+    g = dgl.DGLGraph()
+    g.add_nodes(num_nodes)
+    g.add_edges(src, dst)
     print("# nodes: {}, # edges: {}".format(num_nodes, len(src)))
     return g
 
