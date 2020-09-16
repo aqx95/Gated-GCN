@@ -8,6 +8,7 @@ import random
 from utilities import utils, metrics
 import yaml
 from data import LinkDataset
+from ogb_data import *
 from trainer import Fitter
 
 
@@ -43,7 +44,9 @@ def prepare_data(data_name):
 
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
-train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+# train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
+
 
 # check cuda device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -82,7 +85,6 @@ test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
 test_data, test_labels = test_data.to(device), test_labels.to(device)
 model.eval()
-
 with torch.no_grad():
     pred_test = model(test_graph, test_node_norm,
                       test_edge_norm, test_data)
