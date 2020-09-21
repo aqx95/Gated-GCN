@@ -32,17 +32,17 @@ class Fitter:
             train_loss = self.train_epoch(graph_data)
             self.log(f'[TRAINING] Epoch {self.epoch}    Loss: {train_loss}')
 
-            valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
-            self.log(f'[VALIDATION] Epoch {self.epoch}    Loss: {valid_loss}')
-
-            if self.best_loss > valid_loss:
-                self.best_loss = valid_loss
-                self.model.eval()
-                self.save(f'{self.base_dir}/best-checkpoint-epoch{str(self.epoch).zfill(2)}.bin')
-                for path in sorted(glob(f'{self.base_dir}/best-checkpoint-epoch*.bin'))[:-3]:
-                    os.remove(path)
-
-            self.scheduler.step(metrics=valid_loss)
+            # valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
+            # self.log(f'[VALIDATION] Epoch {self.epoch}    Loss: {valid_loss}')
+            #
+            # if self.best_loss > valid_loss:
+            #     self.best_loss = valid_loss
+            #     self.model.eval()
+            #     self.save(f'{self.base_dir}/best-checkpoint-epoch{str(self.epoch).zfill(2)}.bin')
+            #     for path in sorted(glob(f'{self.base_dir}/best-checkpoint-epoch*.bin'))[:-3]:
+            #         os.remove(path)
+            #
+            # self.scheduler.step(metrics=valid_loss)
             self.epoch += 1
 
 

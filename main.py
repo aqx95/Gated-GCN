@@ -54,7 +54,7 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 graph_data = DGLData(train_data, num_nodes, num_rels)
 #Prep test
 test_graph = graph_data.prep_test_graph()
-test_graph = test_graph.to(device)
+#test_graph = test_graph.to(device)
 test_labels = test_data[:,1].unsqueeze(dim=1)
 #Prep validation
 valid_labels = valid_data[:,1]
@@ -83,7 +83,8 @@ fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
 test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
 test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
-test_data, test_labels = test_data.to(device), test_labels.to(device)
+#test_data, test_labels = test_data.to(device), test_labels.to(device)
+model.cpu()
 model.eval()
 with torch.no_grad():
     pred_test = model(test_graph, test_node_norm,
