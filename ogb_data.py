@@ -13,7 +13,7 @@ def prepare_ogb(name):
     train_edge, valid_edge, test_edge = split_edge["train"], split_edge["valid"], split_edge["test"]
     g = dataset[0] # dgl graph object containing only training edges
 
-    train_data = sample_data(50000, train_edge, True).numpy()
+    train_data = sample_data(50000, train_edge).numpy()
     valid_data = sample_data(50000, valid_edge)
     test_data = sample_data(50000, test_edge)
 
