@@ -19,7 +19,7 @@ def prepare_ogb(name):
 
     num_nodes = g.number_of_nodes()
     num_rels = len(torch.unique(train_edge['relation']))
-
+    del g
 
     return train_data, valid_data, test_data, num_nodes, num_rels
 

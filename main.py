@@ -44,7 +44,7 @@ def prepare_data(data_name):
 
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
-# train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+#train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
 train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
 
 
@@ -60,8 +60,8 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-model = GatedGCN_MLP(num_nodes,
-                in_dim_edge=num_rels,
+model = GatedGCN_MLP(93773,
+                in_dim_edge=51,
                 hid_dim=config['model']['n_hidden'],
                 out_dim=config['model']['num_class'],
                 n_hidden_layers=config['model']['n_layers'],
@@ -84,7 +84,7 @@ test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
 test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
 #test_data, test_labels = test_data.to(device), test_labels.to(device)
-model.cpu()
+model = model.to('cpu')
 model.eval()
 with torch.no_grad():
     pred_test = model(test_graph, test_node_norm,
