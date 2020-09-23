@@ -26,6 +26,7 @@ class Fitter:
 
         self.log('Begin training with {}'.format(self.device))
 
+        self.model = self.model.to(self.device)
 
     def fit(self, graph_data, test_graph, valid_data, test_labels, valid_labels):
         for i in range(self.config['train']['n_epochs']):

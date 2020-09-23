@@ -71,15 +71,13 @@ model = GatedGCN_MLP(93773,
                 residual=True)
 
 
-model = model.to(device)
-
-
 ## Training
 fitter = Fitter(model, config, device)
 fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
 
 
 ## Inference
+print("Evaluation with test set")
 test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
 test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
@@ -87,6 +85,7 @@ test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 model = model.to('cpu')
 model.eval()
 with torch.no_grad():
+    print("Evaluating...")
     pred_test = model(test_graph, test_node_norm,
                       test_edge_norm, test_data)
     metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
