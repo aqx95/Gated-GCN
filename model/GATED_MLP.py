@@ -46,12 +46,12 @@ class GatedGCN_MLP(nn.Module):
         h = torch.index_select(
             self.entity_embedding,
             dim=0,
-            index=g.ndata['node_feat']).unsqueeze(1)
+            index=g.ndata['node_feat'])
 
         e = torch.index_select(
                 self.relation_embedding,
                 dim=0,
-                index=g.edata['edge_feat']).unsqueeze(1)
+                index=g.edata['edge_feat'])
 
         #convolution
         for conv in self.layers:
