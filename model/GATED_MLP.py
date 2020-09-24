@@ -18,10 +18,14 @@ class GatedGCN_MLP(nn.Module):
         self.batch_norm = batch_norm
         self.residual = residual
 
-        self.h_embedding = nn.Embedding(in_dim, hid_dim)
-        self.e_embedding = nn.Embedding(in_dim_edge, hid_dim)
-        self.linear_h = nn.Linear(in_dim, hid_dim)
-        self.linear_e = nn.Linear(in_dim_edge, hid_dim)
+        # self.h_embedding = nn.Embedding(in_dim, hid_dim)
+        # self.e_embedding = nn.Embedding(in_dim_edge, hid_dim)
+        self.entity_embedding = nn.Parameter(torch.zeros(in_dim, hid_dim))
+        nn.init.uniform_(tensor=self.entity_embedding)
+        self.relation_embedding = nn.Parameter(torch.zeros(in_dim_edge, hid_dim))
+        nn.init.uniform_(tensor=self.relation_embedding)
+        # self.linear_h = nn.Linear(in_dim, hid_dim)
+        # self.linear_e = nn.Linear(in_dim_edge, hid_dim)
 
         self.layers = nn.ModuleList([GatedGCNLayer(self.hid_dim, self.hid_dim,
                                         self.dropout, self.graph_norm, self.batch_norm,
@@ -37,8 +41,17 @@ class GatedGCN_MLP(nn.Module):
 
         # h = self.linear_h(g.ndata['node_feat'])
         # e = self.linear_e(g.edata['edge_feat'])
-        h = self.h_embedding(g.ndata['node_feat'])
-        e = self.e_embedding(g.edata['edge_feat'])
+        # h = self.h_embedding(g.ndata['node_feat'])
+        # e = self.e_embedding(g.edata['edge_feat'])
+        h = torch.index_select(
+            self.entity_embedding,
+            dim=0,
+            index=g.ndata['node_feat']).unsqueeze(1)
+
+        e = torch.index_select(
+                self.relation_embedding,
+                dim=0,
+                index=g.edata['edge_feat']).unsqueeze(1)
 
         #convolution
         for conv in self.layers:
