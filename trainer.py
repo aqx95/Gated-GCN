@@ -56,11 +56,11 @@ class Fitter:
 
         labels = torch.LongTensor(data[:,1])
         g, labels = g.to(self.device), labels.to(self.device)
-        #norm
-        node_norm = 1./((g.number_of_nodes())**0.5)
-        edge_norm = 1./((g.number_of_edges())**0.5)
+        # #norm
+        # node_norm = 1./((g.number_of_nodes())**0.5)
+        # edge_norm = 1./((g.number_of_edges())**0.5)
 
-        train_pred = self.model(g, node_norm, edge_norm, data)
+        train_pred = self.model(g,data)
         train_loss = self.model.get_loss(train_pred, labels)
 
         train_loss.backward()
@@ -77,13 +77,13 @@ class Fitter:
         self.model.eval()
 
         #norm
-        valid_node_norm = 1./((test_graph.number_of_nodes())**0.5)
-        valid_edge_norm = 1./((test_graph.number_of_edges())**0.5)
+        # valid_node_norm = 1./((test_graph.number_of_nodes())**0.5)
+        # valid_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
         valid_data, valid_labels = valid_data.to(self.device), valid_labels.to(self.device)
 
         with torch.no_grad():
-            valid_pred = self.model(test_graph, valid_node_norm, valid_edge_norm, valid_data)
+            valid_pred = self.model(test_graph, valid_data)
             valid_loss = self.model.get_loss(valid_pred, valid_labels)
 
         return valid_loss.detach().item()

@@ -10,11 +10,10 @@ class DGLData(Dataset):
         self.num_rel = num_rel
 
     def prepare_train(self, sample_size, split_size, neg_rate, sampler='uniform'):
-        adj_list, degrees = get_adj_and_degrees(self.num_nodes, self.triplets)
-
         if sampler == 'uniform':
             edges = uniform_sampling(self.triplets, sample_size)
         elif sampler == 'neighbor':
+            adj_list, degrees = get_adj_and_degrees(self.num_nodes, self.triplets)
             edges = neighbor_sampling(adj_list, degrees, self.triplets, sample_size)
 
         # Relabeling of nodes ID

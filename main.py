@@ -1,5 +1,5 @@
 from graphdata1 import DGLData
-from model.GATED_MLP import GatedGCN_MLP
+from model.GATED_MLP import GatedGCN
 import time
 import os
 import torch
@@ -16,7 +16,6 @@ from trainer import Fitter
 def load_config(config_name):
     with open(config_name) as file:
         config = yaml.safe_load(file)
-
     return config
 
 def set_seed(seed):
@@ -44,8 +43,8 @@ def prepare_data(data_name):
 
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
-#train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
-train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
+train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+#train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
 
 
 # check cuda device
@@ -60,8 +59,8 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-model = GatedGCN_MLP(93773,
-                in_dim_edge=51,
+model = GatedGCN(num_nodes,
+                in_dim_edge=num_rels,
                 hid_dim=config['model']['n_hidden'],
                 out_dim=config['model']['num_class'],
                 n_hidden_layers=config['model']['n_layers'],
@@ -78,14 +77,13 @@ fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
 
 ## Inference
 print("Evaluation with test set")
-test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
-test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
+# test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
+# test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
 #test_data, test_labels = test_data.to(device), test_labels.to(device)
 model = model.to('cpu')
 model.eval()
 with torch.no_grad():
     print("Evaluating...")
-    pred_test = model(test_graph, test_node_norm,
-                      test_edge_norm, test_data)
+    pred_test = model(test_graph, test_data)
     metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
