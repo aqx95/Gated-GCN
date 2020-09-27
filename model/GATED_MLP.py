@@ -50,7 +50,7 @@ class GatedGCN(nn.Module):
         for conv in self.layers:
             h,e = conv(g, h, e)
 
-        score = self.mlp(g, h)
+        score = self.mlp(h, triplets)
         return score
         # # #FC layer
         # s = h[triplets[:,0]]

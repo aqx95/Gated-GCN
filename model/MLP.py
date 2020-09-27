@@ -7,15 +7,8 @@ class MLPPredictor(nn.Module):
         super().__init__()
         self.W = nn.Linear(in_feat * 2, num_class)
 
-    def apply_edges(self, edges):
-        h_src = edges.src['x']
-        h_dst = edges.dst['x']
-        score = self.W(torch.cat([h_src, h_dst], 1))
-        return {'score': score}
-
-
-    def forward(self, edge_subgraph, x):
-        with edge_subgraph.local_scope():
-            edge_subgraph.ndata['x'] = x
-            edge_subgraph.apply_edges(self.apply_edges)
-            return edge_subgraph.edata['score']
+    def forward(self, x, triplets):
+        s = x[triplets[:,0]]
+        o = x[triplets[:,2]]
+        conv_map = torch.cat((s,o), dim=1)
+        return self.W(conv_map)
