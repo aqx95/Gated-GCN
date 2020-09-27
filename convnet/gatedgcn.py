@@ -39,7 +39,7 @@ class GatedGCNLayer(nn.Module):
         h = Ah_i + torch.sum(sigma_ij*Bh_j, dim=1)/ (torch.sum(sigma_ij,dim=1) + 1e-6)
         return {'h': h}
 
-    def forward(self, g, h, e, norm_n, norm_e):
+    def forward(self, g, h, e):
         h_in = h
         e_in = e
 
@@ -54,6 +54,9 @@ class GatedGCNLayer(nn.Module):
         g.update_all(self.message_func, self.reduce_func)
         h = g.ndata['h'] #result of convolution
         e = g.edata['e'] #result of convolution
+
+        norm_n = 1./((g.number_of_nodes())**0.5)
+        norm_e = 1./((g.number_of_edges())**0.5)
 
         if self.graph_norm:
             h = h* norm_n
