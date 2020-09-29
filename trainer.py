@@ -3,6 +3,7 @@ import numpy as np
 import torch.nn as nn
 import torch
 from glob import glob
+import dgl
 
 class Fitter:
     def __init__(self, net, config, device):
@@ -55,12 +56,16 @@ class Fitter:
                                               self.config['graph_obj']['edge_sampler'])
 
         labels = torch.LongTensor(data[:,1])
+        g = dgl.add_self_loop(g)
         g, labels = g.to(self.device), labels.to(self.device)
         # #norm
         # node_norm = 1./((g.number_of_nodes())**0.5)
         # edge_norm = 1./((g.number_of_edges())**0.5)
-
-        train_pred = self.model(g,data)
+        # ##rgcn node norm
+        # in_deg = g.in_degrees(range(g.number_of_nodes())).float().numpy()
+        # norm = 1.0 / in_deg
+        # norm[np.isinf(norm)] = 0
+        train_pred = self.model(g, data)
         train_loss = self.model.get_loss(train_pred, labels)
 
         train_loss.backward()

@@ -1,5 +1,6 @@
 from graphdata1 import DGLData
 from model.GATED_MLP import GatedGCN
+from model.GCN import GCN
 import time
 import os
 import torch
@@ -10,6 +11,7 @@ import yaml
 from data import LinkDataset
 from ogb_data import *
 from trainer import Fitter
+
 
 
 # Function to load yaml configuration file
@@ -59,16 +61,26 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-model = GatedGCN(num_nodes,
-                in_dim_edge=num_rels,
-                hid_dim=config['model']['n_hidden'],
-                out_dim=config['model']['num_class'],
-                n_hidden_layers=config['model']['n_layers'],
-                dropout=config['model']['dropout'],
-                graph_norm=True,
-                batch_norm=True,
-                residual=True)
+# model = GatedGCN(num_nodes,
+#                 in_dim_edge=num_rels,
+#                 hid_dim=config['model']['n_hidden'],
+#                 out_dim=config['model']['num_class'],
+#                 n_hidden_layers=config['model']['n_layers'],
+#                 dropout=config['model']['dropout'],
+#                 graph_norm=True,
+#                 batch_norm=True,
+#                 residual=True)
+model = GCN(num_nodes, config['model']['n_hidden'],
+            config['model']['num_class'],config['model']['n_layers'] )
 
+# model = LinkPredict(num_nodes,
+#                     config['model']['n_hidden'],
+#                     num_rels,
+#                     num_bases=100,
+#                     num_hidden_layers=config['model']['n_layers'],
+#                     dropout=config['model']['dropout'],
+#                     use_cuda=0,
+#                     reg_param=0.01)
 
 ## Training
 fitter = Fitter(model, config, device)
