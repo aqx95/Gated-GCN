@@ -3,6 +3,7 @@ from convnet.rgcn import BaseRGCN
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+from model.MLP import MLPPredictor
 
 class EmbeddingLayer(nn.Module):
     def __init__(self, num_nodes, h_dim):
@@ -10,7 +11,7 @@ class EmbeddingLayer(nn.Module):
         self.embedding = torch.nn.Embedding(num_nodes, h_dim)
 
     def forward(self, g, h, r, norm):
-        return self.embedding(h.squeeze())
+        return self.embedding(h)
 
 class RGCN(BaseRGCN):
     def build_input_layer(self):
@@ -29,6 +30,7 @@ class LinkPredict(nn.Module):
         self.rgcn = RGCN(in_dim, h_dim, h_dim, num_rels, num_bases,
                          num_hidden_layers, dropout, use_cuda)
         self.reg_param = reg_param
+        self.mlp = MLPPredictor(h_dim, num_rels)
         self.w_relation = nn.Parameter(torch.Tensor(num_rels, h_dim))
         nn.init.xavier_uniform_(self.w_relation,
                                 gain=nn.init.calculate_gain('relu'))
@@ -36,19 +38,23 @@ class LinkPredict(nn.Module):
 
     def forward(self, g, h, r, norm, triplets):
         embedding = self.rgcn.forward(g, h, r, norm)
+        score = self.mlp(h, triplets)
+        return score
         # DistMult
-        s = embedding[triplets[:,0]]
-        r = self.w_relation[triplets[:,1]]
-        o = embedding[triplets[:,2]]
-        score = torch.sum(s * r * o, dim=1)
-        return embedding, score.unsqueeze(dim=1)
+        # s = embedding[triplets[:,0]]
+        # r = self.w_relation[triplets[:,1]]
+        # o = embedding[triplets[:,2]]
+        # score = torch.sum(s * r * o, dim=1)
+        # return embedding, score.unsqueeze(dim=1)
 
     def regularization_loss(self, embedding):
         return torch.mean(embedding.pow(2)) + torch.mean(self.w_relation.pow(2))
 
-    def get_loss(self, embed, score, labels):
+    def get_loss(self, predictions, labels):
         # triplets is a list of data samples (positive and negative)
         # each row in the triplets is a 3-tuple of (source, relation, destination)
-        predict_loss = F.binary_cross_entropy_with_logits(score, labels)
-        reg_loss = self.regularization_loss(embed)
-        return predict_loss + self.reg_param * reg_loss
+        # predict_loss = F.binary_cross_entropy_with_logits(score, labels)
+        # reg_loss = self.regularization_loss(embed)
+        # return predict_loss + self.reg_param * reg_loss
+        predict_loss = nn.CrossEntropyLoss()(predictions, labels)
+        return predict_loss
