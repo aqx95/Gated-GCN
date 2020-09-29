@@ -1,6 +1,7 @@
 from graphdata1 import DGLData
 from model.GATED_MLP import GatedGCN
 from model.GCN import GCN
+from model.RGCN import RGCN
 import time
 import os
 import torch
@@ -70,8 +71,8 @@ valid_labels = valid_data[:,1]
 #                 graph_norm=True,
 #                 batch_norm=True,
 #                 residual=True)
-model = GCN(num_nodes, config['model']['n_hidden'],
-            config['model']['num_class'],config['model']['n_layers'] )
+model = RGCN(num_nodes, config['model']['n_hidden'],
+            config['model']['num_class'],config['model']['n_layers'], num_rels)
 
 # model = LinkPredict(num_nodes,
 #                     config['model']['n_hidden'],
