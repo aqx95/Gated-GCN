@@ -36,15 +36,6 @@ class GatedGCN(nn.Module):
     def forward(self, g, triplets):
         h = self.h_embedding(g.ndata['node_feat'])
         e = self.e_embedding(g.edata['edge_feat'])
-        # h = torch.index_select(
-        #     self.entity_embedding,
-        #     dim=0,
-        #     index=g.ndata['node_feat'])
-        #
-        # e = torch.index_select(
-        #         self.relation_embedding,
-        #         dim=0,
-        #         index=g.edata['edge_feat'])
 
         #convolution
         for conv in self.layers:
