@@ -3,7 +3,7 @@ dataset:
   data_name : FB15k-237
 
 graph_obj:
-  batch_size : 30000
+  batch_size : 50000
   split_size : 0.5
   neg_sampling : 10
   edge_sampler : uniform
@@ -11,7 +11,7 @@ graph_obj:
 
 # Net setting
 model:
-  dropout : 0.2
+  dropout : 0.4
   n_hidden : 500
   n_layers : 2
   num_class : 237
