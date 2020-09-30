@@ -74,14 +74,8 @@ valid_labels = valid_data[:,1]
 model = RGCN(num_nodes, config['model']['n_hidden'],
             config['model']['num_class'],config['model']['n_layers'], num_rels)
 
-# model = LinkPredict(num_nodes,
-#                     config['model']['n_hidden'],
-#                     num_rels,
-#                     num_bases=100,
-#                     num_hidden_layers=config['model']['n_layers'],
-#                     dropout=config['model']['dropout'],
-#                     use_cuda=0,
-#                     reg_param=0.01)
+model = GCN(num_nodes, config['model']['n_hidden'],
+            config['model']['num_class'],config['model']['n_layers'])
 
 ## Training
 fitter = Fitter(model, config, device)
