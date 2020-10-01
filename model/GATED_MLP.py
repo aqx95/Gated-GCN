@@ -27,10 +27,6 @@ class GatedGCN(nn.Module):
                                         self.residual) for _ in range(self.n_layers)])
 
         self.mlp = MLPPredictor(hid_dim, out_dim)
-        self.dropout = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(2*self.hid_dim, 1000)
-        self.bn1 = nn.BatchNorm1d(num_features=1000)
-        self.output = nn.Linear(1000, self.out_dim)
 
 
     def forward(self, g, triplets):
@@ -43,17 +39,6 @@ class GatedGCN(nn.Module):
 
         score = self.mlp(h, triplets)
         return score
-        # # #FC layer
-        # s = h[triplets[:,0]]
-        # o = h[triplets[:,2]]
-
-        # conv_map = torch.cat((s,o), dim=1)
-        # conv_map = self.dropout(conv_map)
-        # fc1 = nn.ReLU()(self.bn1(self.fc1(conv_map)))
-        # fc1 = self.dropout(fc1)
-        # outputs = self.output(fc1)
-        #
-        # return outputs
 
 
     def get_loss(self, predictions, labels):
