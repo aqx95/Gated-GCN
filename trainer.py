@@ -30,6 +30,7 @@ class Fitter:
         self.model = self.model.to(self.device)
 
     def fit(self, graph_data, test_graph, valid_data, test_labels, valid_labels):
+        self.hist_loss = []
         for i in range(self.config['train']['n_epochs']):
             train_loss = self.train_epoch(graph_data)
             self.hist_loss.append(train_loss)
@@ -49,7 +50,7 @@ class Fitter:
             self.scheduler.step()
             self.epoch += 1
 
-        return hist_loss
+        return self.hist_loss
 
     def train_epoch(self, graph_data):
         self.model.train()

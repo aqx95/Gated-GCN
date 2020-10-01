@@ -80,11 +80,11 @@ rgcn = RGCN(num_nodes, config['model']['n_hidden'],
 gcn = GCN(num_nodes, config['model']['n_hidden'],
             config['model']['num_class'],config['model']['n_layers'])
 
-model_zoo = []
-model_zoo.append([gated, rgcn, gcn])
+model_zoo = [gated, rgcn, gcn]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
 fig, ax = plt.subplots()
+ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 labels = ['GatedGCN', 'RGCN', 'GCN']
 
 ## Training
@@ -92,7 +92,7 @@ iter = 0
 for model in model_zoo:
     fitter = Fitter(model, config, device)
     hist_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
-    ax.plot(epoch_count, hist_loss, label=labels[i])
+    ax.plot(epoch_count, hist_loss, label=labels[iter])
     iter += 1
 
     ## Inference
@@ -108,5 +108,8 @@ for model in model_zoo:
         pred_test = model(test_graph, test_data)
         metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
 
+plt.title('Performance of Training Loss on FB15k-237')
+plt.xlabel('Epochs')
+plt.ylabel('Training Loss')
 plt.legend()
-plt.show()
+plt.savefig('train_loss.png')
