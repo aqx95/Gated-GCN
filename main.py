@@ -1,17 +1,19 @@
-from graphdata1 import DGLData
-from model.GATED_MLP import GatedGCN
-from model.GCN import GCN
-from model.RGCN import RGCN
 import time
 import os
 import torch
 import numpy as np
 import random
-from utilities import utils, metrics
 import yaml
-from data import LinkDataset
+import matplotlib.pyplot as plt
+
 from ogb_data import *
+from data import LinkDataset
+from utilities import utils, metrics
 from trainer import Fitter
+from graphdata1 import DGLData
+from model.GATED_MLP import GatedGCN
+from model.GCN import GCN
+from model.RGCN import RGCN
 
 
 
@@ -62,35 +64,49 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-# model = GatedGCN(num_nodes,
-#                 in_dim_edge=num_rels,
-#                 hid_dim=config['model']['n_hidden'],
-#                 out_dim=config['model']['num_class'],
-#                 n_hidden_layers=config['model']['n_layers'],
-#                 dropout=config['model']['dropout'],
-#                 graph_norm=True,
-#                 batch_norm=True,
-#                 residual=True)
-model = RGCN(num_nodes, config['model']['n_hidden'],
+gated = GatedGCN(num_nodes,
+                in_dim_edge=num_rels,
+                hid_dim=config['model']['n_hidden'],
+                out_dim=config['model']['num_class'],
+                n_hidden_layers=config['model']['n_layers'],
+                dropout=config['model']['dropout'],
+                graph_norm=True,
+                batch_norm=True,
+                residual=True)
+
+rgcn = RGCN(num_nodes, config['model']['n_hidden'],
             config['model']['num_class'],config['model']['n_layers'], num_rels)
 
-model = GCN(num_nodes, config['model']['n_hidden'],
+gcn = GCN(num_nodes, config['model']['n_hidden'],
             config['model']['num_class'],config['model']['n_layers'])
 
+model_zoo = []
+model_zoo.append([gated, rgcn, gcn])
+epoch_count = range(1, config['train']['n_epochs'] + 1)
+
+fig, ax = plt.subplots()
+labels = ['GatedGCN', 'RGCN', 'GCN']
+
 ## Training
-fitter = Fitter(model, config, device)
-fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
+iter = 0
+for model in model_zoo:
+    fitter = Fitter(model, config, device)
+    hist_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
+    ax.plot(epoch_count, hist_loss, label=labels[i])
+    iter += 1
 
+    ## Inference
+    print("Evaluation with test set")
+    # test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
+    # test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
-## Inference
-print("Evaluation with test set")
-# test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
-# test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
+    #test_data, test_labels = test_data.to(device), test_labels.to(device)
+    model = model.to('cpu')
+    model.eval()
+    with torch.no_grad():
+        print("Evaluating...")
+        pred_test = model(test_graph, test_data)
+        metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
 
-#test_data, test_labels = test_data.to(device), test_labels.to(device)
-model = model.to('cpu')
-model.eval()
-with torch.no_grad():
-    print("Evaluating...")
-    pred_test = model(test_graph, test_data)
-    metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
+plt.legend()
+plt.show()

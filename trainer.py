@@ -16,14 +16,14 @@ class Fitter:
             os.makedirs(self.base_dir)
 
         self.best_loss = 10**5
+        self.hist_loss = []
         self.epoch = 0
         self.log_path = f'{self.base_dir}/log.txt'
 
         # Optimizer and scheduler
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['optimizer']['lr'],
                                           weight_decay=config['optimizer']['regularization'])
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min',
-                                                                    factor=0.1,patience=3)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)
 
         self.log('Begin training with {}'.format(self.device))
 
@@ -32,6 +32,7 @@ class Fitter:
     def fit(self, graph_data, test_graph, valid_data, test_labels, valid_labels):
         for i in range(self.config['train']['n_epochs']):
             train_loss = self.train_epoch(graph_data)
+            self.hist_loss.append(train_loss)
             self.log(f'[TRAINING] Epoch {self.epoch}    Loss: {train_loss}')
 
             # valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
@@ -45,8 +46,10 @@ class Fitter:
             #         os.remove(path)
             #
             # self.scheduler.step(metrics=valid_loss)
+            self.scheduler.step()
             self.epoch += 1
 
+        return hist_loss
 
     def train_epoch(self, graph_data):
         self.model.train()
