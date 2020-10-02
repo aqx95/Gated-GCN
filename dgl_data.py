@@ -18,13 +18,13 @@ def dgl_data(name):
     valid_set = torch.arange(graph.number_of_edges())[valid_mask]
     test_set = torch.arange(graph.number_of_edges())[test_mask]
 
-    train_data = get_triplets(train_set)
-    valid_data = get_triplets(valid_set)
-    test_data = get_triplets(test_set)
+    train_data = get_triplets(graph, train_set)
+    valid_data = get_triplets(graph, valid_set)
+    test_data = get_triplets(graph, test_set)
 
     return train_data, valid_data, test_data, num_nodes, num_rels
 
-def get_triplets(mask):
+def get_triplets(data, mask):
     head = data.edges()[0][mask]
     tail = data.edges()[1][mask]
     rel = data.edata['etype'][mask]

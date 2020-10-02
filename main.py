@@ -9,6 +9,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 
 from ogb_data import *
+from dgl_data import dgl_data
 from data import LinkDataset
 from utilities import utils, metrics
 from trainer import Fitter
