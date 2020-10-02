@@ -18,7 +18,7 @@ def dgl_data(name):
     valid_set = torch.arange(graph.number_of_edges())[valid_mask]
     test_set = torch.arange(graph.number_of_edges())[test_mask]
 
-    train_data = get_triplets(graph, train_set)
+    train_data = get_triplets(graph, train_set).numpy()
     valid_data = get_triplets(graph, valid_set)
     test_data = get_triplets(graph, test_set)
 
