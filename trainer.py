@@ -65,10 +65,6 @@ class Fitter:
         # #norm
         # node_norm = 1./((g.number_of_nodes())**0.5)
         # edge_norm = 1./((g.number_of_edges())**0.5)
-        # ##rgcn node norm
-        # in_deg = g.in_degrees(range(g.number_of_nodes())).float().numpy()
-        # norm = 1.0 / in_deg
-        # norm[np.isinf(norm)] = 0
         train_pred = self.model(g, data)
         train_loss = self.model.get_loss(train_pred, labels)
 
