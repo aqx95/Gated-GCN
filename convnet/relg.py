@@ -69,11 +69,11 @@ class RELGLayer(nn.Module):
 
     def reduce_func(self, nodes):
         Ah_i = nodes.data['Ah']
-        Bh_j = nodes.mailbox['Bh_j']
+        #Bh_j = nodes.mailbox['Bh_j']
         r_ij = nodes.mailbox['r_ij']
         e = nodes.mailbox['e_ij']
         sigma_ij = torch.sigmoid(e)
-        h = Ah_i + r_ij + torch.sum(sigma_ij*Bh_j, dim=1)/ (torch.sum(sigma_ij,dim=1) + 1e-6)
+        h = Ah_i + torch.sum(sigma_ij*r_ij, dim=1)/ (torch.sum(sigma_ij,dim=1) + 1e-6)
         return {'h': h}
 
     def forward(self, g, h, e, etype):
