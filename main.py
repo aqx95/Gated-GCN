@@ -51,9 +51,9 @@ def prepare_data(data_name):
 
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
-train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+#train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
 #train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
-#train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('wn18')
+train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('wn18')
 
 # check cuda device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

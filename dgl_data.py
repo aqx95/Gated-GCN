@@ -3,7 +3,7 @@ import torch
 
 def dgl_data(name):
   if name == 'wn18':
-    data = dgl.data.WN18Dataset()
+    data = dgl.data.WN18Dataset(reverse=False)
     graph = data[0]
 
     num_nodes = graph.number_of_nodes()
