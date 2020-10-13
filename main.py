@@ -17,7 +17,7 @@ from graphdata1 import DGLData
 from model.GATED_MLP import GatedGCN
 from model.GCN import GCN
 from model.RGCN import RGCN
-
+from model.RELG_MLP import RELG
 
 
 # Function to load yaml configuration file
@@ -53,7 +53,7 @@ config = load_config('config.yaml')
 set_seed(config['train']['seed'])
 train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
 #train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
-train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('wn18')
+#train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('wn18')
 
 # check cuda device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -67,23 +67,33 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-gated = GatedGCN(num_nodes,
-                in_dim_edge=num_rels,
-                hid_dim=config['model']['n_hidden'],
-                out_dim=config['model']['num_class'],
-                n_hidden_layers=config['model']['n_layers'],
-                dropout=config['model']['dropout'],
-                graph_norm=True,
-                batch_norm=True,
-                residual=True)
+# gated = GatedGCN(num_nodes,
+#                 in_dim_edge=num_rels,
+#                 hid_dim=config['model']['n_hidden'],
+#                 out_dim=config['model']['num_class'],
+#                 n_hidden_layers=config['model']['n_layers'],
+#                 dropout=config['model']['dropout'],
+#                 graph_norm=True,
+#                 batch_norm=True,
+#                 residual=True)
+#
+# rgcn = RGCN(num_nodes, config['model']['n_hidden'],
+#             config['model']['num_class'],config['model']['n_layers'], num_rels)
+#
+# gcn = GCN(num_nodes, config['model']['n_hidden'],
+#             config['model']['num_class'],config['model']['n_layers'])
 
-rgcn = RGCN(num_nodes, config['model']['n_hidden'],
-            config['model']['num_class'],config['model']['n_layers'], num_rels)
+relg = RELG(num_nodes,
+            in_dim_edge=num_rels,
+            hid_dim=config['model']['n_hidden'],
+            out_dim=config['model']['num_class'],
+            n_hidden_layers=config['model']['n_layers'],
+            dropout=config['model']['dropout'],
+            graph_norm=True,
+            batch_norm=True,
+            residual=True)
 
-gcn = GCN(num_nodes, config['model']['n_hidden'],
-            config['model']['num_class'],config['model']['n_layers'])
-
-model_zoo = [gated, rgcn, gcn]
+model_zoo = [relg] #[gated, rgcn, gcn]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
 fig, ax = plt.subplots()
