@@ -67,21 +67,21 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-# gated = GatedGCN(num_nodes,
-#                 in_dim_edge=num_rels,
-#                 hid_dim=config['model']['n_hidden'],
-#                 out_dim=config['model']['num_class'],
-#                 n_hidden_layers=config['model']['n_layers'],
-#                 dropout=config['model']['dropout'],
-#                 graph_norm=True,
-#                 batch_norm=True,
-#                 residual=True)
-#
-# rgcn = RGCN(num_nodes, config['model']['n_hidden'],
-#             config['model']['num_class'],config['model']['n_layers'], num_rels)
-#
-# gcn = GCN(num_nodes, config['model']['n_hidden'],
-#             config['model']['num_class'],config['model']['n_layers'])
+gated = GatedGCN(num_nodes,
+                in_dim_edge=num_rels,
+                hid_dim=config['model']['n_hidden'],
+                out_dim=config['model']['num_class'],
+                n_hidden_layers=config['model']['n_layers'],
+                dropout=config['model']['dropout'],
+                graph_norm=True,
+                batch_norm=True,
+                residual=True)
+
+rgcn = RGCN(num_nodes, config['model']['n_hidden'],
+            config['model']['num_class'],config['model']['n_layers'], num_rels)
+
+gcn = GCN(num_nodes, config['model']['n_hidden'],
+            config['model']['num_class'],config['model']['n_layers'])
 
 relg = RELG(num_nodes,
             in_dim_edge=num_rels,
@@ -93,7 +93,7 @@ relg = RELG(num_nodes,
             batch_norm=True,
             residual=True)
 
-model_zoo = [relg] #[gated, rgcn, gcn]
+model_zoo = [gated, rgcn, gcn, relg]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
 fig, ax = plt.subplots()
