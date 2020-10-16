@@ -52,7 +52,7 @@ def prepare_data(data_name):
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
 if config['dataset']['data_name'] == 'fb15k-237':
-    train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+    train_data, valid_data, test_data, num_nodes, num_rels = prepare_data('FB15k-237')
 if config['dataset']['data_name'] == 'biokg':
     train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
 if config['dataset']['data_name'] == 'wikikg':
