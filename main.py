@@ -107,13 +107,13 @@ labels = ['GatedGCN', 'RGCN', 'GCN', 'RELG']
 ## Training
 iter = 0
 for model in model_zoo:
+    print('Training with {}'.format(labels[iter]))
     fitter = Fitter(model, config, device)
     hist_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
     ax.plot(epoch_count, hist_loss, label=labels[iter])
 
 
     ## Inference
-    print("Evaluation with test set")
 
     model = model.to('cpu')
     model.eval()
