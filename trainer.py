@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch
 from glob import glob
 import dgl
+from tqdm.notebook import tqdm
 
 class Fitter:
     def __init__(self, net, config, device):
@@ -31,7 +32,7 @@ class Fitter:
 
     def fit(self, graph_data, test_graph, valid_data, test_labels, valid_labels):
         self.hist_loss = []
-        for i in range(self.config['train']['n_epochs']):
+        for i in tqdm(range(self.config['train']['n_epochs'])):
             train_loss = self.train_epoch(graph_data)
             self.hist_loss.append(train_loss)
             self.log(f'[TRAINING] Epoch {self.epoch}    Loss: {train_loss}')

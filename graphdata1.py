@@ -48,10 +48,8 @@ class DGLData(Dataset):
         node_id = torch.arange(0, self.num_nodes, dtype=torch.long)
         rel = torch.from_numpy(rel)
         if hot:
-            print('one-hot feature')
             g = get_onehot_feat(g, self.num_nodes, self.num_rel, node_id, rel)
         else:
-            print('embed feature')
             g = get_embed_feat(g, self.num_nodes, self.num_rel, node_id, rel)
 
 
