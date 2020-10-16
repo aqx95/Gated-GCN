@@ -9,7 +9,7 @@ class DGLData(Dataset):
         self.num_nodes = num_nodes
         self.num_rel = num_rel
 
-    def prep_train_graph(self, sample_size, split_size, neg_rate, sampler='uniform', hot=False):
+    def prep_train_graph(self, sample_size, split_size, neg_rate, sampler='uniform', hot=False, split=True):
         if sampler == 'uniform':
             edges = uniform_sampling(self.triplets, sample_size)
         elif sampler == 'neighbor':
@@ -22,6 +22,14 @@ class DGLData(Dataset):
         uniq_v, edges = np.unique((src, dst), return_inverse=True)
         src, dst = np.reshape(edges, (2, -1))
         relabeled_edges = np.stack((src, rel, dst)).transpose()
+
+        if split:
+            split_size = int(sample_size * split_size)
+            graph_split_ids = np.random.choice(np.arange(sample_size),
+                                               size=split_size, replace=False)
+            src = src[graph_split_ids]
+            dst = dst[graph_split_ids]
+            rel = rel[graph_split_ids]
 
         uniq_v = torch.from_numpy(uniq_v)
         rel = torch.from_numpy(rel)

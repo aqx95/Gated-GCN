@@ -1,6 +1,6 @@
 # Data setting
 dataset:
-  data_name : FB15k-237
+  data_name : wn18
 
 graph_obj:
   batch_size : 50000
@@ -26,6 +26,6 @@ optimizer:
 train:
   seed: 2020
   gpu : 0
-  n_epochs : 3
+  n_epochs : 200
   folder : checkpoint
-  verbose : True
+  verbose : False

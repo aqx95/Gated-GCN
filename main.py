@@ -51,9 +51,14 @@ def prepare_data(data_name):
 
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
-#train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
-#train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
-train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('wn18')
+if config['dataset']['data_name'] == 'fb15k-237':
+    train_data, valid_data, test_data, num_nodes, num_rels = prepare_data(config['dataset']['data_name'])
+if config['dataset']['data_name'] == 'biokg':
+    train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
+if config['dataset']['data_name'] == 'wikikg':
+    train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-wikikg")
+if config['dataset']['data_name'] == 'wn18':
+    train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('wn18')
 
 # check cuda device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -61,7 +66,6 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 graph_data = DGLData(train_data, num_nodes, num_rels)
 #Prep test
 test_graph = graph_data.prep_test_graph()
-#test_graph = test_graph.to(device)
 test_labels = test_data[:,1].unsqueeze(dim=1)
 #Prep validation
 valid_labels = valid_data[:,1]
@@ -71,7 +75,7 @@ gated = GatedGCN(num_nodes,
                 in_dim_edge=num_rels,
                 hid_dim=config['model']['n_hidden'],
                 out_dim=config['model']['num_class'],
-                n_hidden_layers=config['model']['n_layers'],
+                n_hidden_layers=1,
                 dropout=config['model']['dropout'],
                 graph_norm=True,
                 batch_norm=True,
@@ -98,7 +102,7 @@ epoch_count = range(1, config['train']['n_epochs'] + 1)
 
 fig, ax = plt.subplots()
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-labels = ['GatedGCN', 'RGCN', 'GCN']
+labels = ['GatedGCN', 'RGCN', 'GCN', 'RELG']
 
 ## Training
 iter = 0
@@ -106,22 +110,22 @@ for model in model_zoo:
     fitter = Fitter(model, config, device)
     hist_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
     ax.plot(epoch_count, hist_loss, label=labels[iter])
-    iter += 1
+
 
     ## Inference
     print("Evaluation with test set")
-    # test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
-    # test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
-    #test_data, test_labels = test_data.to(device), test_labels.to(device)
     model = model.to('cpu')
     model.eval()
     with torch.no_grad():
         print("Evaluating...")
         pred_test = model(test_graph, test_data)
+        print('Results for {}'.format(labels[iter]))
         metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
 
-plt.title('Performance of Training Loss on FB15k-237')
+    iter += 1
+
+plt.title('Performance of Training Loss on {}'.format(config['dataset']['data_name']))
 plt.xlabel('Epochs')
 plt.ylabel('Training Loss')
 plt.legend()
