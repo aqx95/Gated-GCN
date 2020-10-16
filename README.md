@@ -7,4 +7,5 @@ Final Year Project. Developing Graph Neural Network for Link Prediction on Knowl
 Run ```pip install -r requirements.txt``` to install the required dependencies.
 
 ### Training script
-Currently i have wrapped the arguments in a class. So you can directly run it using ```python train1.py```
+Run ```python main.py``` to run the training and inference. Most of the common configurations are stored in ```config.yaml```.
+Training loss plot will be generated at the end, under ```train_loss.png```.
