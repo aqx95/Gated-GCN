@@ -81,7 +81,7 @@ def build_graph(num_nodes, triplets):
     g = dgl.DGLGraph()
     g.add_nodes(num_nodes)
     g.add_edges(src, dst)
-    print("# nodes: {}, # edges: {}".format(num_nodes, len(src)))
+    #print("# nodes: {}, # edges: {}".format(num_nodes, len(src)))
     return g
 
 
