@@ -100,7 +100,7 @@ relg = RELG(num_nodes,
 model_zoo = [gated, rgcn, gcn, relg]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
-fig, ax = plt.subplots()
+fig, (ax1, ax2) = plt.subplots(1, 2)
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 labels = ['GatedGCN', 'RGCN', 'GCN', 'RELG']
 
@@ -109,8 +109,9 @@ iter = 0
 for model in model_zoo:
     print('Training with {}'.format(labels[iter]))
     fitter = Fitter(model, config, device)
-    hist_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
-    ax.plot(epoch_count, hist_loss, label=labels[iter])
+    train_loss, val_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
+    ax1.plot(epoch_count, train_loss, label=labels[iter])
+    ax2.plot(epoch_count, val_loss, label=labels[iter])
 
 
     ## Inference
@@ -124,9 +125,20 @@ for model in model_zoo:
         metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
 
     iter += 1
+ax1.set_title("Training Loss on "{}.format(config['dataset']['data_name']))
+ax1.set_ylabel('Training Loss')
+ax1.set_xlabel('Epochs')
+ax1.legend()
 
-plt.title('Performance of Training Loss on {}'.format(config['dataset']['data_name']))
-plt.xlabel('Epochs')
-plt.ylabel('Training Loss')
-plt.legend()
-plt.savefig('train_loss.png')
+ax2.set_title("Validation Loss on "{}.format(config['dataset']['data_name']))
+ax2.set_ylabel('Validation Loss')
+ax2.set_xlabel('Epochs')
+ax2.legend()
+
+plt.savefig('loss.png')
+
+# plt.title('Training & Validation Loss on {}'.format(config['dataset']['data_name']))
+# plt.xlabel('Epochs')
+# plt.ylabel('Training Loss')
+# plt.legend()
+# plt.savefig('train_loss.png')

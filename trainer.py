@@ -18,6 +18,7 @@ class Fitter:
 
         self.best_loss = 10**5
         self.hist_loss = []
+        self.val_loss = []
         self.epoch = 0
         self.log_path = f'{self.base_dir}/log.txt'
 
@@ -37,8 +38,9 @@ class Fitter:
             self.hist_loss.append(train_loss)
             self.log(f'[TRAINING] Epoch {self.epoch}    Loss: {train_loss}')
 
-            # valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
-            # self.log(f'[VALIDATION] Epoch {self.epoch}    Loss: {valid_loss}')
+            valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
+            self.val_loss.append(valid_loss)
+            self.log(f'[VALIDATION] Epoch {self.epoch}    Loss: {valid_loss}')
             #
             # if self.best_loss > valid_loss:
             #     self.best_loss = valid_loss
@@ -51,7 +53,7 @@ class Fitter:
             self.scheduler.step()
             self.epoch += 1
 
-        return self.hist_loss
+        return self.hist_loss, self.val_loss
 
     def train_epoch(self, graph_data):
         self.model.train()
@@ -80,13 +82,14 @@ class Fitter:
 
 
     def validate_epoch(self, test_graph, valid_data, valid_labels):
+        self.model = self.model.to('cpu')
         self.model.eval()
 
         #norm
         # valid_node_norm = 1./((test_graph.number_of_nodes())**0.5)
         # valid_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
-        valid_data, valid_labels = valid_data.to(self.device), valid_labels.to(self.device)
+        #valid_data, valid_labels = valid_data.to(self.device), valid_labels.to(self.device)
 
         with torch.no_grad():
             valid_pred = self.model(test_graph, valid_data)
