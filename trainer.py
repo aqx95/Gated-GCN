@@ -56,6 +56,7 @@ class Fitter:
         return self.hist_loss, self.val_loss
 
     def train_epoch(self, graph_data):
+        self.model = self.model.to(self.device)
         self.model.train()
         g, data = graph_data.prep_train_graph(self.config['graph_obj']['batch_size'],
                                               self.config['graph_obj']['split_size'],

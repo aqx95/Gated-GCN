@@ -100,8 +100,9 @@ relg = RELG(num_nodes,
 model_zoo = [gated, rgcn, gcn, relg]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
-fig, (ax1, ax2) = plt.subplots(1, 2)
-ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6,10))
+fig.subplots_adjust(hspace=.5)
+#ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 labels = ['GatedGCN', 'RGCN', 'GCN', 'RELG']
 
 ## Training
@@ -125,17 +126,17 @@ for model in model_zoo:
         metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
 
     iter += 1
-ax1.set_title("Training Loss on "{}.format(config['dataset']['data_name']))
+ax1.set_title("Training Loss on {}".format(config['dataset']['data_name']))
 ax1.set_ylabel('Training Loss')
 ax1.set_xlabel('Epochs')
 ax1.legend()
 
-ax2.set_title("Validation Loss on "{}.format(config['dataset']['data_name']))
+ax2.set_title("Validation Loss on {}".format(config['dataset']['data_name']))
 ax2.set_ylabel('Validation Loss')
 ax2.set_xlabel('Epochs')
 ax2.legend()
 
-plt.savefig('loss.png')
+plt.savefig('loss.png', bbox_inches = "tight")
 
 # plt.title('Training & Validation Loss on {}'.format(config['dataset']['data_name']))
 # plt.xlabel('Epochs')
