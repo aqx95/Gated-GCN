@@ -2,10 +2,12 @@ import dgl
 import torch
 
 def dgl_data(name):
-  if name == 'wn18':
-    data = dgl.data.WN18Dataset(reverse=False)
-    graph = data[0]
+    if name == 'wn18':
+        data = dgl.data.WN18Dataset(reverse=False)
+    if name == 'fb15k-237':
+        data = dgl.data.FB15k237Dataset(reverse=False)
 
+    graph = data[0]
     num_nodes = graph.number_of_nodes()
     num_rels = len(torch.unique(graph.edata['etype']))
 
