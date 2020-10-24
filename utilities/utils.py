@@ -8,14 +8,14 @@ def neg_sampling(pos_sample, num_entity, neg_rate):
     num_edges = len(pos_sample)
     num_samples = num_edges * neg_rate
     neg_samples = np.tile(pos_sample,(neg_rate, 1)) #repeating array A, n number of times
-    labels = np.zeros(num_edges * (neg_rate+1), dtype=np.float32)
+    labels = np.zeros(num_edges * (neg_rate+1), dtype=np.float32 #plus 1 for pos_sample
     labels[:num_edges] = 1
     values = np.random.randint(num_entity, size = num_samples)
     choices = np.random.uniform(size = num_samples)
     subj = choices > 0.5
     obj = choices <= 0.5
-    neg_samples[subj,0] = values[subj]
-    neg_samples[obj, 2] = values[obj]
+    neg_samples[subj,0] = values[subj] #corrupt head
+    neg_samples[obj, 2] = values[obj]  #corrupt tail
 
     return np.concatenate((pos_sample, neg_samples)), labels
 
