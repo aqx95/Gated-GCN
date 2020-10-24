@@ -32,27 +32,27 @@ def set_seed(seed):
     np.random.seed(seed) # for numpy pseudo-random generator
     torch.manual_seed(seed) # pytorch (both CPU and CUDA)
 
-def prepare_data(data_name):
-    data = LinkDataset(data_name)
-    data.load_data()
-
-    train_data = data.train
-    valid_data = data.valid
-    test_data = data.test
-    num_nodes = data.num_nodes
-    num_rels = data.num_rels
-
-    #Convert to Long
-    valid_data = torch.LongTensor(valid_data)
-    test_data = torch.LongTensor(test_data)
-
-    return train_data, valid_data, test_data, num_nodes, num_rels
+# def prepare_data(data_name):
+#     data = LinkDataset(data_name)
+#     data.load_data()
+#
+#     train_data = data.train
+#     valid_data = data.valid
+#     test_data = data.test
+#     num_nodes = data.num_nodes
+#     num_rels = data.num_rels
+#
+#     #Convert to Long
+#     valid_data = torch.LongTensor(valid_data)
+#     test_data = torch.LongTensor(test_data)
+#
+#     return train_data, valid_data, test_data, num_nodes, num_rels
 
 
 config = load_config('config.yaml')
 set_seed(config['train']['seed'])
 if config['dataset']['data_name'] == 'fb15k-237':
-    train_data, valid_data, test_data, num_nodes, num_rels = prepare_data('FB15k-237')
+    train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('FB15k-237')
 if config['dataset']['data_name'] == 'biokg':
     train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
 if config['dataset']['data_name'] == 'wikikg':
