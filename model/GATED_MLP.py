@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from model.MLP import MLPPredictor
 from convnet.gatedgcn import GatedGCNLayer
 
-class GatedGCN(nn.Module):
+class GatedGCN_mlp(nn.Module):
     def __init__(self, in_dim, in_dim_edge, hid_dim, out_dim, n_hidden_layers,
                 dropout, graph_norm, batch_norm, residual):
         super().__init__()
