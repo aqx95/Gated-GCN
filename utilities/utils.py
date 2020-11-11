@@ -1,6 +1,13 @@
 import numpy as np
 import dgl
 import torch
+import yaml
+
+# Function to load yaml configuration file
+def load_config(config_name):
+    with open(config_name) as file:
+        config = yaml.safe_load(file)
+    return config
 
 ### Graph utilities
 
@@ -8,7 +15,7 @@ def neg_sampling(pos_sample, num_entity, neg_rate):
     num_edges = len(pos_sample)
     num_samples = num_edges * neg_rate
     neg_samples = np.tile(pos_sample,(neg_rate, 1)) #repeating array A, n number of times
-    labels = np.zeros(num_edges * (neg_rate+1), dtype=np.float32 #plus 1 for pos_sample
+    labels = np.zeros(num_edges * (neg_rate+1), dtype=np.float32) #plus 1 for pos_sample
     labels[:num_edges] = 1
     values = np.random.randint(num_entity, size = num_samples)
     choices = np.random.uniform(size = num_samples)
