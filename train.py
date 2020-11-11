@@ -79,9 +79,6 @@ model = GatedGCN(num_nodes,
                 batch_norm=True,
                 residual=True)
 
-if use_cuda:
-    model.cuda()
-
 # optimizer & scheduler
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 #scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,mode='min',factor=0.1,patience=3)
@@ -95,6 +92,7 @@ print("start training...")
 
 best_mrr = 0
 for epoch in range(args.n_epochs):
+    model.to(args.gpu)
     model.train()
     epoch += 1
     g, node_id, edge_type, data, labels =train_dgl.prepare_train(30000,0.5,args.negative_sample)
@@ -123,7 +121,7 @@ for epoch in range(args.n_epochs):
     edge_norm = 1./((g.number_of_edges())**0.5)
 
     t0 = time.time()
-    embed = model(g, node_feat, edge_feat)
+    embed = model(g, node_id, edge_type)
     loss = model.get_loss(embed, data, labels)
     t1 = time.time()
     loss.backward()
@@ -159,7 +157,7 @@ for epoch in range(args.n_epochs):
         model.eval()
         print("start eval")
         with torch.no_grad():
-            embed = model(test_graph, test_node_feat, test_edge_feat)
+            embed = model(test_graph, test_node_id, test_rel)
             #embed = model(test_graph, test_node_id.cuda(), test_rel.cuda(), test_norm)
             mrr = eval.calc_mrr(embed, model.w_relation, torch.LongTensor(train_data),
                                  valid_data, test_data, hits=[1, 3, 10], eval_bz=args.eval_batch_size,
