@@ -29,13 +29,13 @@ class GatedGCN(nn.Module):
         nn.init.xavier_uniform_(self.w_relation, gain=nn.init.calculate_gain('relu'))
 
 
-    def forward(self, g, node_id, edge_type, norm_n, norm_e):
+    def forward(self, g, node_id, edge_type):
         h = self.linear_h(node_id)
         e = self.linear_e(edge_type)
 
         #convnets
         for conv in self.layers:
-            h, e = conv(g, h, e, norm_n, norm_e)
+            h, e = conv(g, h, e)
 
         return h
 
