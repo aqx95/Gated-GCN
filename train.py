@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from graphdata import DGLData
 from model.GATEDGCN import GatedGCN
+from model.RELG import RELG
 import time
 import utilities.metrics as eval
 
@@ -69,15 +70,25 @@ train_dgl = DGLData(train_data, num_nodes, num_rels)
 #                     use_cuda=use_cuda,
 #                     reg_param=args.regularization)
 
-model = GatedGCN(num_nodes,
-                in_dim_edge=num_rels,
-                hid_dim=args.n_hidden,
-                out_dim=args.n_hidden,
-                n_hidden_layers=args.n_layers,
-                dropout=0.2,
-                graph_norm=True,
-                batch_norm=True,
-                residual=True)
+# model = GatedGCN(num_nodes,
+#                 in_dim_edge=num_rels,
+#                 hid_dim=args.n_hidden,
+#                 out_dim=args.n_hidden,
+#                 n_hidden_layers=args.n_layers,
+#                 dropout=0.2,
+#                 graph_norm=True,
+#                 batch_norm=True,
+#                 residual=True)
+
+model = RELG(num_nodes,
+            in_dim_edge=num_rels,
+            hid_dim=args.n_hidden,
+            out_dim=args.n_hidden,
+            n_hidden_layers=args.n_layers,
+            dropout=0.2,
+            graph_norm=True,
+            batch_norm=True,
+            residual=True)
 
 # optimizer & scheduler
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -92,7 +103,8 @@ print("start training...")
 
 best_mrr = 0
 for epoch in range(args.n_epochs):
-    model.to(args.gpu)
+    if use_cuda:
+        model.to(args.gpu)
     model.train()
     epoch += 1
     g, node_id, edge_type, data, labels =train_dgl.prepare_train(30000,0.5,args.negative_sample)
@@ -121,7 +133,7 @@ for epoch in range(args.n_epochs):
     edge_norm = 1./((g.number_of_edges())**0.5)
 
     t0 = time.time()
-    embed = model(g, node_id, edge_type)
+    embed = model(g, node_id.cuda(), edge_type.cuda())
     loss = model.get_loss(embed, data, labels)
     t1 = time.time()
     loss.backward()
