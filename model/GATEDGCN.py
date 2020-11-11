@@ -28,18 +28,19 @@ class GatedGCN(nn.Module):
         self.w_relation = nn.Parameter(torch.Tensor(self.in_dim_edge, hid_dim))
         nn.init.xavier_uniform_(self.w_relation, gain=nn.init.calculate_gain('relu'))
 
+        self.h_embedding = nn.Embedding(in_dim, hid_dim)
+        self.e_embedding = nn.Embedding(in_dim_edge, hid_dim)
+
 
     def forward(self, g, node_id, edge_type):
-        h = self.linear_h(node_id)
-        e = self.linear_e(edge_type)
+        h = self.h_embedding(node_id)
+        e = self.e_embedding(edge_type)
 
         #convnets
         for conv in self.layers:
             h, e = conv(g, h, e)
 
         return h
-
-
 
 
     def regularization_loss(self, embedding):
