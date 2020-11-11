@@ -23,6 +23,9 @@ class DGLData(Dataset):
         src, dst = np.reshape(edges, (2, -1))
         relabeled_edges = np.stack((src, rel, dst)).transpose()
 
+        # Negative sampling
+        samples, labels = neg_sampling(relabeled_edges, len(uniq_v), neg_rate)
+
         if split:
             split_size = int(sample_size * split_size)
             graph_split_ids = np.random.choice(np.arange(sample_size),
@@ -39,7 +42,7 @@ class DGLData(Dataset):
         else:
             g = get_embed_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
 
-        return g, relabeled_edges
+        return g, relabeled_edges, samples, labels
 
     def prep_test_graph(self, hot=False):
         src, rel, dst = self.triplets.transpose()

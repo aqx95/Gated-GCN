@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch
 from glob import glob
 import dgl
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 class Fitter:
     def __init__(self, net, config, device):
@@ -38,9 +38,9 @@ class Fitter:
             self.hist_loss.append(train_loss)
             self.log(f'[TRAINING] Epoch {self.epoch}    Loss: {train_loss}')
 
-            valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
-            self.val_loss.append(valid_loss)
-            self.log(f'[VALIDATION] Epoch {self.epoch}    Loss: {valid_loss}')
+            # valid_loss = self.validate_epoch(test_graph, valid_data, valid_labels)
+            # self.val_loss.append(valid_loss)
+            # self.log(f'[VALIDATION] Epoch {self.epoch}    Loss: {valid_loss}')
             #
             # if self.best_loss > valid_loss:
             #     self.best_loss = valid_loss
@@ -58,19 +58,20 @@ class Fitter:
     def train_epoch(self, graph_data):
         self.model = self.model.to(self.device)
         self.model.train()
-        g, data = graph_data.prep_train_graph(self.config['graph_obj']['batch_size'],
+        g, data, samples, labels = graph_data.prep_train_graph(self.config['graph_obj']['batch_size'],
                                               self.config['graph_obj']['split_size'],
                                               self.config['graph_obj']['neg_sampling'],
                                               self.config['graph_obj']['edge_sampler'])
 
-        labels = torch.LongTensor(data[:,1])
+        samples, labels = torch.from_numpy(samples), torch.from_numpy(labels)
+        #labels = torch.LongTensor(data[:,1])
         g = dgl.add_self_loop(g)
         g, labels = g.to(self.device), labels.to(self.device)
         # #norm
         # node_norm = 1./((g.number_of_nodes())**0.5)
         # edge_norm = 1./((g.number_of_edges())**0.5)
-        train_pred = self.model(g, data)
-        train_loss = self.model.get_loss(train_pred, labels)
+        embed = self.model(g, data)
+        train_loss = self.model.get_loss(g, embed, samples, labels)
 
         train_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config['optimizer']['grad_norm'])

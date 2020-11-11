@@ -10,7 +10,6 @@ from matplotlib.ticker import FormatStrFormatter
 
 from ogb_data import *
 from dgl_data import dgl_data
-from data import LinkDataset
 from utilities import utils, metrics
 from trainer import Fitter
 from graphdata1 import DGLData
@@ -20,11 +19,6 @@ from model.RGCN import RGCN
 from model.RELG_MLP import RELG
 
 
-# Function to load yaml configuration file
-def load_config(config_name):
-    with open(config_name) as file:
-        config = yaml.safe_load(file)
-    return config
 
 def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)  # set PYTHONHASHSEED env var at fixed value
@@ -49,10 +43,10 @@ def set_seed(seed):
 #     return train_data, valid_data, test_data, num_nodes, num_rels
 
 
-config = load_config('config.yaml')
+config = utils.load_config('config.yaml')
 set_seed(config['train']['seed'])
 if config['dataset']['data_name'] == 'fb15k-237':
-    train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('FB15k-237')
+    train_data, valid_data, test_data, num_nodes, num_rels = dgl_data('fb15k-237')
 if config['dataset']['data_name'] == 'biokg':
     train_data, valid_data, test_data, num_nodes, num_rels = prepare_ogb("ogbl-biokg")
 if config['dataset']['data_name'] == 'wikikg':
@@ -97,13 +91,13 @@ relg = RELG(num_nodes,
             batch_norm=True,
             residual=True)
 
-model_zoo = [gated, rgcn, gcn, relg]
+model_zoo = [relg]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6,10))
 fig.subplots_adjust(hspace=.5)
 #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-labels = ['GatedGCN', 'RGCN', 'GCN', 'RELG']
+labels = ['RELG']
 
 ## Training
 iter = 0

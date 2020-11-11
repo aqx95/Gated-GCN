@@ -1,6 +1,6 @@
 # Data setting
 dataset:
-  data_name : wn18
+  data_name : fb15k-237
 
 graph_obj:
   batch_size : 50000
@@ -28,4 +28,4 @@ train:
   gpu : 0
   n_epochs : 200
   folder : checkpoint
-  verbose : False
+  verbose : True
