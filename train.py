@@ -140,7 +140,7 @@ for epoch in range(args.n_epochs):
     edge_norm = 1./((g.number_of_edges())**0.5)
 
     t0 = time.time()
-    embed = model(g, node_id, edge_type)
+    embed = model(g, node_id.cuda(), edge_type.cuda())
     loss = model.get_loss(embed, data, labels)
     t1 = time.time()
     loss.backward()
