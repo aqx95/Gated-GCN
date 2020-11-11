@@ -25,7 +25,7 @@ class GatedGCN(nn.Module):
                                                     self.graph_norm, self.batch_norm,
                                                     self.residual) for _ in range(self.n_layers)])
 
-        self.w_relation = nn.Parameter(torch.Tensor(self.in_dim_edge, hid_dim))
+        self.distmult = nn.Parameter(torch.Tensor(self.in_dim_edge, hid_dim))
         nn.init.xavier_uniform_(self.w_relation, gain=nn.init.calculate_gain('relu'))
 
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
@@ -49,7 +49,7 @@ class GatedGCN(nn.Module):
     def get_loss(self, embed, triplets, labels):
         #distmult
         s = embed[triplets[:,0]]
-        r = self.w_relation[triplets[:,1]]
+        r = self.distmult[triplets[:,1]]
         o = embed[triplets[:,2]]
         score = torch.sum(s * r * o, dim=1)
         predict_loss = F.binary_cross_entropy_with_logits(score, labels)
