@@ -6,6 +6,7 @@ import torch
 from graphdata import DGLData
 from model.GATEDGCN import GatedGCN
 from model.RELG import RELG
+from model.RGCN import RGCN
 import time
 import utilities.metrics as eval
 
@@ -80,15 +81,21 @@ train_dgl = DGLData(train_data, num_nodes, num_rels)
 #                 batch_norm=True,
 #                 residual=True)
 
-model = RELG(num_nodes,
-            in_dim_edge=num_rels,
-            hid_dim=args.n_hidden,
-            out_dim=args.n_hidden,
-            n_hidden_layers=args.n_layers,
-            dropout=0.2,
-            graph_norm=True,
-            batch_norm=True,
-            residual=True)
+model = RGCN(num_nodes,
+    args.n_hidden,
+    num_rels,
+    args.n_layers,
+    num_rels)
+
+# model = RELG(num_nodes,
+#             in_dim_edge=num_rels,
+#             hid_dim=args.n_hidden,
+#             out_dim=args.n_hidden,
+#             n_hidden_layers=args.n_layers,
+#             dropout=0.2,
+#             graph_norm=True,
+#             batch_norm=True,
+#             residual=True)
 
 # optimizer & scheduler
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -133,7 +140,7 @@ for epoch in range(args.n_epochs):
     edge_norm = 1./((g.number_of_edges())**0.5)
 
     t0 = time.time()
-    embed = model(g, node_id.cuda(), edge_type.cuda())
+    embed = model(g, node_id, edge_type)
     loss = model.get_loss(embed, data, labels)
     t1 = time.time()
     loss.backward()
