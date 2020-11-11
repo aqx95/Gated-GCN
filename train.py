@@ -105,7 +105,7 @@ for epoch in range(args.n_epochs):
     data, labels = torch.from_numpy(data), torch.from_numpy(labels)
     deg = g.in_degrees(range(g.number_of_nodes())).float().view(-1, 1)
     if use_cuda:
-        deg, edge_norm =  edge_norm.cuda(), deg.cuda()
+        #deg, edge_norm =  edge_norm.cuda(), deg.cuda()
         data, labels = data.cuda(), labels.cuda()
         g = g.to(args.gpu)
 
@@ -155,6 +155,7 @@ for epoch in range(args.n_epochs):
         test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
         test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
 
+        model.cpu()
         model.eval()
         print("start eval")
         with torch.no_grad():
