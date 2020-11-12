@@ -83,7 +83,7 @@ train_dgl = DGLData(train_data, num_nodes, num_rels)
 
 model = RGCN(num_nodes,
     args.n_hidden,
-    num_rels,
+    args.n_hidden,
     args.n_layers,
     num_rels)
 
@@ -178,6 +178,6 @@ for epoch in range(args.n_epochs):
         with torch.no_grad():
             embed = model(test_graph, test_node_id, test_rel)
             #embed = model(test_graph, test_node_id.cuda(), test_rel.cuda(), test_norm)
-            mrr = eval.calc_mrr(embed, model.w_relation, torch.LongTensor(train_data),
+            mrr = eval.calc_mrr(embed, model.distmult, torch.LongTensor(train_data),
                                  valid_data, test_data, hits=[1, 3, 10], eval_bz=args.eval_batch_size,
                                  eval_p=args.eval_protocol)
