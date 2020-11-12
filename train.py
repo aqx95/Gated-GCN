@@ -41,6 +41,13 @@ def comp_edge_norm(g):
     g_.apply_edges(lambda edges : {'norm' : edges.dst['norm']})
     return g_.edata['norm']
 
+def set_seed(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)  # set PYTHONHASHSEED env var at fixed value
+    random.seed(seed)  #set fixed value for python built-in pseudo-random generator
+    np.random.seed(seed) # for numpy pseudo-random generator
+    torch.manual_seed(seed) # pytorch (both CPU and CUDA)
+
+set_seed(2020)
 
 data = LinkDataset('FB15k-237')
 data.load_data()
