@@ -26,7 +26,7 @@ class GatedGCN(nn.Module):
                                                     self.residual) for _ in range(self.n_layers)])
 
         self.distmult = nn.Parameter(torch.Tensor(self.in_dim_edge, hid_dim))
-        nn.init.xavier_uniform_(self.w_relation, gain=nn.init.calculate_gain('relu'))
+        nn.init.xavier_uniform_(self.distmult, gain=nn.init.calculate_gain('relu'))
 
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
         self.e_embedding = nn.Embedding(in_dim_edge, hid_dim)
