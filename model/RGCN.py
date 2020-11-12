@@ -16,33 +16,21 @@ class RGCN(nn.Module):
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
         self.layers = nn.ModuleList([RelGraphConv(
                                     hid_dim, hid_dim, num_rel, regularizer='bdd',
-                                    low_mem=True, dropout=0.4)
+                                    num_bases=100,low_mem=True, dropout=0.4)
                                     for _ in range(n_layers)])
 
         self.distmult = nn.Parameter(torch.Tensor(num_rel, hid_dim))
         nn.init.xavier_uniform_(self.distmult, gain=nn.init.calculate_gain('relu'))
 
 
-    def forward(self, g, node_id, edge_type):
+    def forward(self, g, node_id, edge_type, edge_norm):
         h = self.h_embedding(node_id)
         e = edge_type
-        edge_norm = self.comp_edge_norm(g)
-        
+
         for conv in self.layers:
             h = conv(g, h, e, edge_norm)
 
         return h
-
-    def comp_edge_norm(self, g):
-        g = g.local_var()
-        #compute node norm
-        in_deg = g.in_degrees(range(g.number_of_nodes())).float().numpy()
-        node_norm = 1.0 / in_deg
-        node_norm[np.isinf(norm)] = 0
-        #compute edge norm
-        g.ndata['norm'] = node_norm
-        g.apply_edges(lambda edges : {'norm' : edges.dst['norm']})
-        return g.edata['norm']
 
 
     def regularization_loss(self, embedding):
