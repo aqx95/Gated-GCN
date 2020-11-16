@@ -103,7 +103,7 @@ labels = ['RELG1', 'RELG2', 'RELG3', 'RELG5']
 iter = 0
 for model in model_zoo:
     print('Training with {}'.format(labels[iter]))
-    print(f'Number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad}')
+    print('Number of parameters: {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     fitter = Fitter(model, config, device)
     train_loss, val_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
     plt.plot(epoch_count, train_loss, label=labels[iter])
