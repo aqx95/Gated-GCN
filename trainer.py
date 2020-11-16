@@ -26,7 +26,7 @@ class Fitter:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['optimizer']['lr'],
                                           weight_decay=config['optimizer']['regularization'])
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)
-        
+
         self.log('Begin training with {}'.format(self.device))
         self.model = self.model.to(self.device)
 
@@ -64,7 +64,7 @@ class Fitter:
 
         labels = torch.LongTensor(data[:,1])
         #g = dgl.add_self_loop(g)
-        g = g.to(self.device)
+        g, labels = g.to(self.device), labels.to(self.device)
         pred = self.model(g, data)
         train_loss = self.model.get_loss(pred, labels)
 
