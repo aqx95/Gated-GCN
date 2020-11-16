@@ -32,6 +32,7 @@ class RELG_mlp(nn.Module):
     def forward(self, g, triplets):
         h = self.h_embedding(g.ndata['node_feat'])
         e = self.e_embedding(g.edata['edge_feat'])
+        etype = g.edata['edge_feat']
 
         #convolution
         for conv in self.layers:
