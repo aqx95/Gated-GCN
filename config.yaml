@@ -13,8 +13,8 @@ graph_obj:
 model:
   dropout : 0.2
   n_hidden : 500
-  n_layers : 3
-  num_class : 18
+  n_layers : 1
+  num_class : 237
 
 optimizer:
   lr : 0.001
@@ -26,6 +26,6 @@ optimizer:
 train:
   seed: 2020
   gpu : 0
-  n_epochs : 200
+  n_epochs : 2
   folder : checkpoint
   verbose : True
