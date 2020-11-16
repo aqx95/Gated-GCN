@@ -26,9 +26,8 @@ class Fitter:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['optimizer']['lr'],
                                           weight_decay=config['optimizer']['regularization'])
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)
-
+        
         self.log('Begin training with {}'.format(self.device))
-
         self.model = self.model.to(self.device)
 
     def fit(self, graph_data, test_graph, valid_data, test_labels, valid_labels):
@@ -58,20 +57,16 @@ class Fitter:
     def train_epoch(self, graph_data):
         self.model = self.model.to(self.device)
         self.model.train()
-        g, data, samples, labels = graph_data.prep_train_graph(self.config['graph_obj']['batch_size'],
+        g, data = graph_data.prep_train_graph(self.config['graph_obj']['batch_size'],
                                               self.config['graph_obj']['split_size'],
                                               self.config['graph_obj']['neg_sampling'],
                                               self.config['graph_obj']['edge_sampler'])
 
-        samples, labels = torch.from_numpy(samples), torch.from_numpy(labels)
-        #labels = torch.LongTensor(data[:,1])
-        g = dgl.add_self_loop(g)
-        g, labels = g.to(self.device), labels.to(self.device)
-        # #norm
-        # node_norm = 1./((g.number_of_nodes())**0.5)
-        # edge_norm = 1./((g.number_of_edges())**0.5)
-        embed = self.model(g, data)
-        train_loss = self.model.get_loss(g, embed, samples, labels)
+        labels = torch.LongTensor(data[:,1])
+        #g = dgl.add_self_loop(g)
+        g = g.to(self.device)
+        pred = self.model(g, data)
+        train_loss = self.model.get_loss(pred, labels)
 
         train_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config['optimizer']['grad_norm'])
@@ -86,12 +81,6 @@ class Fitter:
     def validate_epoch(self, test_graph, valid_data, valid_labels):
         self.model = self.model.to('cpu')
         self.model.eval()
-
-        #norm
-        # valid_node_norm = 1./((test_graph.number_of_nodes())**0.5)
-        # valid_edge_norm = 1./((test_graph.number_of_edges())**0.5)
-
-        #valid_data, valid_labels = valid_data.to(self.device), valid_labels.to(self.device)
 
         with torch.no_grad():
             valid_pred = self.model(test_graph, valid_data)
