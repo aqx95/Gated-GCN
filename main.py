@@ -13,10 +13,10 @@ from dgl_data import dgl_data
 from utilities import utils, metrics
 from trainer import Fitter
 from graphdata1 import DGLData
-from model.GATED_MLP import GatedGCN
-from model.GCN import GCN
-from model.RGCN import RGCN
-from model.RELG_MLP import RELG
+from model.GATED_MLP import GatedGCN_mlp
+from model.GCN_MLP import GCN_mlp
+from model.RGCN_MLP import RGCN_mlp
+from model.RELG_MLP import RELG_mlp
 
 
 
@@ -65,7 +65,7 @@ test_labels = test_data[:,1].unsqueeze(dim=1)
 valid_labels = valid_data[:,1]
 
 # Prepare model
-gated = GatedGCN(num_nodes,
+gated = GatedGCN_mlp(num_nodes,
                 in_dim_edge=num_rels,
                 hid_dim=config['model']['n_hidden'],
                 out_dim=config['model']['num_class'],
@@ -75,13 +75,13 @@ gated = GatedGCN(num_nodes,
                 batch_norm=True,
                 residual=True)
 
-rgcn = RGCN(num_nodes, config['model']['n_hidden'],
+rgcn = RGCN_mlp(num_nodes, config['model']['n_hidden'],
             config['model']['num_class'],config['model']['n_layers'], num_rels)
 
-gcn = GCN(num_nodes, config['model']['n_hidden'],
+gcn = GCN_mlp(num_nodes, config['model']['n_hidden'],
             config['model']['num_class'],config['model']['n_layers'])
 
-relg = RELG(num_nodes,
+relg = RELG_mlp(num_nodes,
             in_dim_edge=num_rels,
             hid_dim=config['model']['n_hidden'],
             out_dim=config['model']['num_class'],
@@ -91,13 +91,13 @@ relg = RELG(num_nodes,
             batch_norm=True,
             residual=True)
 
-model_zoo = [relg]
+model_zoo = [gcn, rgcn, gated, relg]
 epoch_count = range(1, config['train']['n_epochs'] + 1)
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6,10))
-fig.subplots_adjust(hspace=.5)
+# fig, ax = plt.subplots(4, 1, figsize=(6,10))
+#fig.subplots_adjust(hspace=.5)
 #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-labels = ['RELG']
+labels = ['GCN','RGCN','GATED','RELG']
 
 ## Training
 iter = 0
@@ -105,12 +105,10 @@ for model in model_zoo:
     print('Training with {}'.format(labels[iter]))
     fitter = Fitter(model, config, device)
     train_loss, val_loss = fitter.fit(graph_data, test_graph, valid_data, test_labels, valid_labels)
-    ax1.plot(epoch_count, train_loss, label=labels[iter])
-    ax2.plot(epoch_count, val_loss, label=labels[iter])
+    plt.plot(epoch_count, train_loss, label=labels[iter])
 
 
     ## Inference
-
     model = model.to('cpu')
     model.eval()
     with torch.no_grad():
@@ -120,20 +118,21 @@ for model in model_zoo:
         metrics.get_mrr(pred_test, test_labels, hits=[1,3,10])
 
     iter += 1
-ax1.set_title("Training Loss on {}".format(config['dataset']['data_name']))
-ax1.set_ylabel('Training Loss')
-ax1.set_xlabel('Epochs')
-ax1.legend()
 
-ax2.set_title("Validation Loss on {}".format(config['dataset']['data_name']))
-ax2.set_ylabel('Validation Loss')
-ax2.set_xlabel('Epochs')
-ax2.legend()
+# ax.set_title("Training Loss on {}".format(config['dataset']['data_name']))
+# ax.set_ylabel('Training Loss')
+# ax.set_xlabel('Epochs')
+# ax.legend()
+
+# ax2.set_title("Validation Loss on {}".format(config['dataset']['data_name']))
+# ax2.set_ylabel('Validation Loss')
+# ax2.set_xlabel('Epochs')
+# ax2.legend()
 
 plt.savefig('loss.png', bbox_inches = "tight")
 
-# plt.title('Training & Validation Loss on {}'.format(config['dataset']['data_name']))
-# plt.xlabel('Epochs')
-# plt.ylabel('Training Loss')
-# plt.legend()
-# plt.savefig('train_loss.png')
+plt.title('Training & Validation Loss on {}'.format(config['dataset']['data_name']))
+plt.xlabel('Epochs')
+plt.ylabel('Training Loss')
+plt.legend()
+plt.savefig('train_loss.png')
