@@ -26,40 +26,21 @@ class RELG_mlp(nn.Module):
                                         self.in_dim_edge, self.dropout, self.graph_norm, self.batch_norm,
                                         self.residual) for _ in range(self.n_layers)])
 
-        #self.mlp = MLPPredictor(hid_dim, out_dim)
-        self.distmult = nn.Parameter(torch.Tensor(in_dim_edge, hid_dim))
+        self.mlp = MLPPredictor(hid_dim, out_dim)
+
 
     def forward(self, g, triplets):
         h = self.h_embedding(g.ndata['node_feat'])
         e = self.e_embedding(g.edata['edge_feat'])
-        etype = g.edata['edge_feat']
 
         #convolution
         for conv in self.layers:
             h,e = conv(g, h, e, etype)
 
-        #score = self.mlp(h, triplets)
-        return h#score
-
-
-    def calc_score(self, embedding, triplets):
-        s = embedding[triplets[:,0]]
-        r = self.distmult[triplets[:,1]]
-        o = embedding[triplets[:,2]]
-        score = torch.sum(s * r * o, dim=1)
+        score = self.mlp(h, triplets)
         return score
 
 
-    def regularization_loss(self, embedding):
-        return torch.mean(embedding.pow(2)) + torch.mean(self.distmult.pow(2))
-
-
-    def get_loss(self, g, embed, triplets, labels):
-        score = self.calc_score(embed, triplets)
-        predict_loss = F.binary_cross_entropy_with_logits(score, labels)
-        reg_loss = self.regularization_loss(embed)
-        return predict_loss + 0.01 * reg_loss
-
-    # def get_loss(self, predictions, labels):
-    #     predict_loss = nn.CrossEntropyLoss()(predictions, labels)
-    #     return predict_loss
+    def get_loss(self, predictions, labels):
+        predict_loss = nn.CrossEntropyLoss()(predictions, labels)
+        return predict_loss
