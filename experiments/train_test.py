@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(1,"/Users/admin/Documents/FYP/Gated-GCN")
+sys.path.insert(1,"../Gated-GCN")
 
 from utilities.utils import load_config
 from ogb_data import *
