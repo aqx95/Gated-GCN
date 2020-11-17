@@ -30,6 +30,7 @@ class Fitter:
         self.log('Begin training with {}'.format(self.device))
         self.model = self.model.to(self.device)
 
+
     def fit(self, graph_data, test_graph, valid_data, valid_labels):
         self.hist_loss = []
         for i in tqdm(range(self.config['train']['n_epochs'])):
@@ -72,7 +73,7 @@ class Fitter:
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        del g, data, labels
+        del g, embeddings, data, labels
 
         return train_loss.detach().item()
 
