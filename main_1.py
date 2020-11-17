@@ -90,12 +90,13 @@ def main(args):
         plt.plot(epoch_count, train_loss, label=labels[iter])
 
         # Inference
-        if args.dataset not in ["fb15k", "wn18"]:
-            model = model.to('cpu')
-        if args.dataset in ["fb15k", "wn18"]:
-            train_data, test_graph = train_data.to(device), test_graph.to(device)
-            test_node_id, test_rel = test_node_id.to(device), test_rel.to(device)
-
+        # if args.dataset not in ["fb15k", "wn18"]:
+        #     model = model.to('cpu')
+        # if args.dataset in ["fb15k", "wn18"]:
+        #     train_data = torch.from_numpy(train_data)
+        #     train_data, test_graph = train_data.to(device), test_graph.to(device)
+        #     test_node_id, test_rel = test_node_id.to(device), test_rel.to(device)
+        model = model.to('cpu')
         model.eval()
         print('Start evaluating...')
         with torch.no_grad():

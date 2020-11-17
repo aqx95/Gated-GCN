@@ -32,7 +32,7 @@ class Fitter:
 
     def fit(self, graph_data, test_graph, valid_data, valid_labels):
         self.hist_loss = []
-        for i in range(self.config['train']['n_epochs']):
+        for i in tqdm(range(self.config['train']['n_epochs'])):
             train_loss = self.train_epoch(graph_data)
             self.hist_loss.append(train_loss)
             self.log(f'[TRAINING] Epoch {self.epoch}    Loss: {train_loss}')
