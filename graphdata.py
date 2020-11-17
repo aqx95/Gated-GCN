@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from utilities.utils import *
+from utilities import utils
 from torch.utils.data import Dataset
 
 class DGLData(Dataset):
@@ -9,12 +9,12 @@ class DGLData(Dataset):
         self.num_nodes = num_nodes
         self.num_rel = num_rel
 
-    def prepare_train(self, sample_size, split_size, neg_rate, sampler='uniform'):
+    def prep_train_graph(self, sample_size, split_size, neg_rate, sampler='uniform', hot=False, split=True):
         if sampler == 'uniform':
-            edges = uniform_sampling(self.triplets, sample_size)
+            edges = utils.uniform_sampling(self.triplets, sample_size)
         elif sampler == 'neighbor':
-            adj_list, degrees = get_adj_and_degrees(self.num_nodes, self.triplets)
-            edges = neighbor_sampling(adj_list, degrees, self.triplets, sample_size)
+            adj_list, degrees = utils.get_adj_and_degrees(self.num_nodes, self.triplets)
+            edges = utils.neighbor_sampling(adj_list, degrees, self.triplets, sample_size)
 
         # Relabeling of nodes ID
         edges = self.triplets[edges]
@@ -24,27 +24,47 @@ class DGLData(Dataset):
         relabeled_edges = np.stack((src, rel, dst)).transpose()
 
 
-        #negative sampling
-        samples, labels = neg_sampling(relabeled_edges, len(uniq_v), neg_rate)
+        # negative sampling
+        samples, labels = utils.neg_sampling(relabeled_edges, len(uniq_v), neg_rate)
+        samples, labels = torch.from_numpy(samples), torch.from_numpy(labels)
 
-        #Split graph; using half as graph structure
-        split_size = int(sample_size * split_size)
-        graph_split_ids = np.random.choice(np.arange(sample_size),
-                                           size=split_size, replace=False)
-        src = src[graph_split_ids]
-        dst = dst[graph_split_ids]
-        rel = rel[graph_split_ids]
+        # Split graph; expose graph structure for training based on split_size
+        if split:
+            split_size = int(sample_size * split_size)
+            graph_split_ids = np.random.choice(np.arange(sample_size),
+                                               size=split_size, replace=False)
+            src = src[graph_split_ids]
+            dst = dst[graph_split_ids]
+            rel = rel[graph_split_ids]
 
         # build DGL graph
-        print("# sampled nodes: {}".format(len(uniq_v)))
-        print("# sampled edges: {}".format(len(src)))
-        g= build_graph(len(uniq_v), (src, rel, dst))
+        uniq_v = torch.from_numpy(uniq_v)
+        rel = torch.from_numpy(rel)
+        g = utils.build_graph(len(uniq_v), (src, rel, dst))
+
+        # Set node and edge features
+        if hot:
+            g = utils.get_onehot_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
+        else:
+            g = utils.get_embed_feat(g, self.num_nodes, self.num_rel, uniq_v, rel)
 
         return g, uniq_v, rel, samples, labels
 
-    def prepare_test(self):
+
+    def prep_test_graph(self, hot=False):
         src, rel, dst = self.triplets.transpose()
-        return build_graph(self.num_nodes,(src,rel,dst)), rel
+        g = utils.build_graph(self.num_nodes,(src,rel,dst))
+
+        # Set node and edge features
+        node_id = torch.arange(0, self.num_nodes, dtype=torch.long)
+        rel = torch.from_numpy(rel)
+        if hot:
+            g = utils.get_onehot_feat(g, self.num_nodes, self.num_rel, node_id, rel)
+        else:
+            g = utils.get_embed_feat(g, self.num_nodes, self.num_rel, node_id, rel)
+
+        return g, node_id, rel
+
 
 
 
