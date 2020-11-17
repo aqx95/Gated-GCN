@@ -30,7 +30,7 @@ class Fitter:
         self.log('Begin training with {}'.format(self.device))
         self.model = self.model.to(self.device)
 
-    def fit(self, graph_data, test_graph, valid_data, test_labels, valid_labels):
+    def fit(self, graph_data, test_graph, valid_data, valid_labels):
         self.hist_loss = []
         for i in range(self.config['train']['n_epochs']):
             train_loss = self.train_epoch(graph_data)
