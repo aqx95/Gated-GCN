@@ -23,9 +23,24 @@ class RGCN(nn.Module):
         nn.init.xavier_uniform_(self.distmult, gain=nn.init.calculate_gain('relu'))
 
 
-    def forward(self, g, node_id, edge_type, edge_norm):
+    def comp_edge_norm(self, g):
+        g_ = g.local_var()
+        #compute node norm
+        in_deg = g_.in_degrees(range(g_.number_of_nodes())).float().numpy()
+        node_norm = 1.0 / in_deg
+        node_norm[np.isinf(node_norm)] = 0
+        node_norm = node_norm.astype('int64')
+        #compute edge norm
+        g_.ndata['norm'] = torch.from_numpy(node_norm).view(-1,1)
+        g_.apply_edges(lambda edges : {'norm' : edges.dst['norm']})
+        return g_.edata['norm']
+
+
+    def forward(self, g, node_id, edge_type):
         h = self.h_embedding(node_id)
         e = edge_type
+
+        edge_norm = comp_edge_norm(g)
 
         for conv in self.layers:
             h = conv(g, h, e, edge_norm)
