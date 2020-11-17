@@ -40,7 +40,7 @@ class RGCN(nn.Module):
         h = self.h_embedding(node_id)
         e = edge_type
 
-        edge_norm = comp_edge_norm(g)
+        edge_norm = self.comp_edge_norm(g)
 
         for conv in self.layers:
             h = conv(g, h, e, edge_norm)
