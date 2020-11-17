@@ -29,17 +29,6 @@ class args:
     eval_every= 250
     edge_sampler = 'uniform'
 
-def comp_edge_norm(g):
-    g_ = g.local_var()
-    #compute node norm
-    in_deg = g_.in_degrees(range(g_.number_of_nodes())).float().numpy()
-    node_norm = 1.0 / in_deg
-    node_norm[np.isinf(node_norm)] = 0
-    node_norm = node_norm.astype('int64')
-    #compute edge norm
-    g_.ndata['norm'] = torch.from_numpy(node_norm).view(-1,1)
-    g_.apply_edges(lambda edges : {'norm' : edges.dst['norm']})
-    return g_.edata['norm']
 
 def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)  # set PYTHONHASHSEED env var at fixed value
@@ -70,11 +59,11 @@ if use_cuda:
 
 #prepare test graph
 test_dgl = DGLData(train_data, num_nodes, num_rels)
-test_graph, test_rel = test_dgl.prepare_test()
+test_graph, test_node_id, test_rel = test_dgl.prep_test_graph()
 test_deg = test_graph.in_degrees(
             range(test_graph.number_of_nodes())).float().view(-1,1)
-test_node_id = torch.arange(0, num_nodes, dtype=torch.long)
-test_rel = torch.from_numpy(test_rel)
+# test_node_id = torch.arange(0, num_nodes, dtype=torch.long)
+# test_rel = torch.from_numpy(test_rel)
 #test_norm = utils.node_norm_to_edge_norm(test_graph, torch.from_numpy(test_norm).view(-1, 1))
 
 
@@ -134,17 +123,11 @@ for epoch in range(args.n_epochs):
         model.to(args.gpu)
     model.train()
     epoch += 1
-    g, node_id, edge_type, data, labels =train_dgl.prepare_train(30000,0.5,args.negative_sample)
-
-    node_id = torch.from_numpy(node_id)
-    edge_type = torch.from_numpy(edge_type)
-    edge_norm = comp_edge_norm(g)
-    data, labels = torch.from_numpy(data), torch.from_numpy(labels)
-    deg = g.in_degrees(range(g.number_of_nodes())).float().view(-1, 1)
+    g, node_id, edge_type, data, labels =train_dgl.prep_train_graph(30000,0.5,args.negative_sample)
     if use_cuda:
-        #deg, edge_norm =  edge_norm.cuda(), deg.cuda()
-        data, labels = data.cuda(), labels.cuda()
-        g, edge_norm = g.to(args.gpu), edge_norm.to(args.gpu)
+        node_id, edge_type = node_id.to(args.gpu), edge_type.to(args.gpu)
+        data, labels = data.to(args.gpu), labels.to(args.gpu)
+        g = g.to(args.gpu)
 
     #Set node and edge features
     # node_feat = np.zeros((g.number_of_nodes(), num_nodes))
@@ -160,7 +143,7 @@ for epoch in range(args.n_epochs):
     # edge_norm = 1./((g.number_of_edges())**0.5)
 
     t0 = time.time()
-    embed = model(g, node_id.cuda(), edge_type.cuda(), edge_norm)
+    embed = model(g, node_id, edge_type)
     loss = model.get_loss(embed, data, labels)
     t1 = time.time()
     loss.backward()
@@ -175,7 +158,7 @@ for epoch in range(args.n_epochs):
 
     optimizer.zero_grad()
     #scheduler.step(loss)
-    del g, edge_norm, embed
+    del g, embed
 
     # validation
     if epoch % args.eval_every == 0:
@@ -191,14 +174,11 @@ for epoch in range(args.n_epochs):
         # #norm
         # test_node_norm = 1./((test_graph.number_of_nodes())**0.5)
         # test_edge_norm = 1./((test_graph.number_of_edges())**0.5)
-
-        test_edge_norm = comp_edge_norm(test_graph)
-
         model.cpu()
         model.eval()
         print("start eval")
         with torch.no_grad():
-            embed = model(test_graph, test_node_id, test_rel, test_edge_norm)
+            embed = model(test_graph, test_node_id, test_rel, 'cpu')
             #embed = model(test_graph, test_node_id.cuda(), test_rel.cuda(), test_norm)
             mrr = eval.calc_mrr(embed, model.distmult, torch.LongTensor(train_data),
                                  valid_data, test_data, hits=[1, 3, 10], eval_bz=args.eval_batch_size,
