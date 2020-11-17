@@ -1,5 +1,6 @@
 import dgl
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from dgl.nn import RelGraphConv
@@ -24,23 +25,25 @@ class RGCN(nn.Module):
 
 
     def comp_edge_norm(self, g):
-        g_ = g.local_var()
+        g_ = g.to(torch.device('cpu'))
         #compute node norm
         in_deg = g_.in_degrees(range(g_.number_of_nodes())).float().numpy()
         node_norm = 1.0 / in_deg
         node_norm[np.isinf(node_norm)] = 0
-        node_norm = node_norm.astype('int64')
+        node_norm = torch.LongTensor(node_norm)
         #compute edge norm
-        g_.ndata['norm'] = torch.from_numpy(node_norm).view(-1,1)
+        g_.ndata['norm'] = node_norm.view(-1,1)
         g_.apply_edges(lambda edges : {'norm' : edges.dst['norm']})
         return g_.edata['norm']
 
 
-    def forward(self, g, node_id, edge_type):
+    def forward(self, g, node_id, edge_type, device='gpu'):
         h = self.h_embedding(node_id)
         e = edge_type
 
         edge_norm = self.comp_edge_norm(g)
+        if device == 'gpu':
+          edge_norm = edge_norm.cuda()
 
         for conv in self.layers:
             h = conv(g, h, e, edge_norm)
