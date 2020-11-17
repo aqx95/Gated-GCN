@@ -92,6 +92,10 @@ def main(args):
         # Inference
         if args.dataset not in ["fb15k", "wn18"]:
             model = model.to('cpu')
+        if args.dataset in ["fb15k", "wn18"]:
+            train_data, test_graph = train_data.to(device), test_graph.to(device)
+            test_node_id, test_rel = test_node_id.to(device), test_rel.to(device)
+
         model.eval()
         print('Start evaluating...')
         with torch.no_grad():
