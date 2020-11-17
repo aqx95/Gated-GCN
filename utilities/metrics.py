@@ -1,8 +1,10 @@
+import dgl
 import numpy as np
 import torch
+from tqdm import tqdm
 import torch.nn as nn
 from torch.multiprocessing import Queue
-import dgl
+
 
 
 def calc_mrr(embedding, w, train_triplets, valid_triplets, test_triplets, hits=[], eval_bz=100, eval_p="filtered"):
@@ -100,9 +102,9 @@ def perturb_o_and_get_filtered_rank(embedding, w, s, r, o, test_size, triplets_t
     """
     num_entities = embedding.shape[0]
     ranks = []
-    for idx in range(test_size):
-        if idx % 100 == 0:
-            print("test triplet {} / {}".format(idx, test_size))
+    for idx in tqdm(range(test_size)):
+        #if idx % 100 == 0:
+            #print("test triplet {} / {}".format(idx, test_size))
         target_s = s[idx]
         target_r = r[idx]
         target_o = o[idx]
@@ -123,9 +125,9 @@ def perturb_s_and_get_filtered_rank(embedding, w, s, r, o, test_size, triplets_t
     """
     num_entities = embedding.shape[0]
     ranks = []
-    for idx in range(test_size):
-        if idx % 100 == 0:
-            print("test triplet {} / {}".format(idx, test_size))
+    for idx in tqdm(range(test_size)):
+        #if idx % 100 == 0:
+            #print("test triplet {} / {}".format(idx, test_size))
         target_s = s[idx]
         target_r = r[idx]
         target_o = o[idx]
