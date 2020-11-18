@@ -37,12 +37,12 @@ class RGCN(nn.Module):
         return g_.edata['norm']
 
 
-    def forward(self, g, node_id, edge_type, device='gpu'):
+    def forward(self, g, node_id, edge_type):
         h = self.h_embedding(node_id)
         e = edge_type
 
         edge_norm = self.comp_edge_norm(g)
-        if device == 'gpu':
+        if g.device.type == 'cuda':
           edge_norm = edge_norm.cuda()
 
         for conv in self.layers:
