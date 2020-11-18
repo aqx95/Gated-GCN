@@ -100,7 +100,7 @@ def main(args):
         model.eval()
         print('Start evaluating...')
         with torch.no_grad():
-            embed = model(test_graph, test_node_id, test_rel, 'cpu')
+            embed = model(test_graph, test_node_id, test_rel)
             mrr = metrics.calc_mrr(embed, model.distmult, torch.LongTensor(train_data),
                                  valid_data, test_data, hits=[1, 3, 10], eval_bz=args.eval_batch_size,
                                  eval_p=args.eval_protocol)

@@ -23,8 +23,7 @@ class Fitter:
         self.log_path = f'{self.base_dir}/log.txt'
 
         # Optimizer and scheduler
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['optimizer']['lr'],
-                                          weight_decay=config['optimizer']['regularization'])
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['optimizer']['lr'])
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)
 
         self.log('Begin training with {}'.format(self.device))
@@ -50,7 +49,7 @@ class Fitter:
             #         os.remove(path)
             #
             # self.scheduler.step(metrics=valid_loss)
-            self.scheduler.step()
+            #self.scheduler.step()
             self.epoch += 1
 
         return self.hist_loss
