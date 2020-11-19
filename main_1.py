@@ -64,7 +64,8 @@ def main(args):
                 config['model']['n_hidden'],
                 config['model']['n_hidden'],
                 config['model']['n_layers'],
-                num_rels)
+                num_rels,
+                config['model']['dropout'])
 
     relg = RELG(num_nodes,
                 in_dim_edge=num_rels,
