@@ -6,18 +6,19 @@ import torch.nn.functional as F
 from dgl.nn import RelGraphConv
 
 class RGCN(nn.Module):
-    def __init__(self, in_dim, hid_dim, out_dim, n_layers, num_rel):
+    def __init__(self, in_dim, hid_dim, out_dim, n_layers, num_rel, dropout):
         super().__init__()
         self.in_dim = in_dim
         self.hid_dim = hid_dim
         self.out_dim = out_dim
         self.n_layers = n_layers
         self.num_rel = num_rel
+        self.dropout = dropout
 
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
         self.layers = nn.ModuleList([RelGraphConv(
                                     hid_dim, hid_dim, num_rel, regularizer='bdd',
-                                    num_bases=100,low_mem=True, dropout=0.4)
+                                    num_bases=100,low_mem=True, dropout=self.dropout)
                                     for _ in range(n_layers)])
 
         self.distmult = nn.Parameter(torch.Tensor(num_rel, hid_dim))
