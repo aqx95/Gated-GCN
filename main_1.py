@@ -77,10 +77,10 @@ def main(args):
                 batch_norm=True,
                 residual=True)
 
-    model_zoo = [gated, rgcn, relg]
+    model_zoo = [relg]
     epoch_count = range(1, config['train']['n_epochs'] + 1)
 
-    labels = ['GATED','RGCN','RELG']
+    labels = ['RELG']
 
     # Training
     iter = 0
