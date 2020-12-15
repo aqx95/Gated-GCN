@@ -24,7 +24,7 @@ class Fitter:
 
         # Optimizer and scheduler
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['optimizer']['lr'])
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=500, gamma=0.5)
 
         self.log('Begin training with {}'.format(self.device))
         self.model = self.model.to(self.device)
