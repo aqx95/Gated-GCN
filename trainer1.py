@@ -49,7 +49,7 @@ class Fitter:
             #         os.remove(path)
             #
             # self.scheduler.step(metrics=valid_loss)
-            #self.scheduler.step()
+            self.scheduler.step()
             self.epoch += 1
 
         return self.hist_loss
