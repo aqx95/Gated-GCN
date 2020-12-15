@@ -5,7 +5,7 @@ dataset:
 graph_obj:
   batch_size : 50000
   split_size : 0.5
-  neg_sampling : 5
+  neg_sampling : 10
   edge_sampler : uniform
 
 
@@ -26,6 +26,6 @@ optimizer:
 train:
   seed: 2020
   gpu : 0
-  n_epochs : 1000
+  n_epochs : 2000
   folder : checkpoint
   verbose : True
