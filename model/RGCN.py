@@ -3,7 +3,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
+
 from dgl.nn import RelGraphConv
+from Bilinear_Pred import BiLinearPredictor
 
 class RGCN(nn.Module):
     def __init__(self, in_dim, hid_dim, out_dim, n_layers, num_rel, dropout):
@@ -18,11 +20,10 @@ class RGCN(nn.Module):
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
         self.layers = nn.ModuleList([RelGraphConv(
                                     hid_dim, hid_dim, num_rel, regularizer='bdd',
-                                    num_bases=100,low_mem=True, dropout=self.dropout)
+                                    num_bases=None,low_mem=True, dropout=self.dropout)
                                     for _ in range(n_layers)])
 
-        self.distmult = nn.Parameter(torch.Tensor(num_rel, hid_dim))
-        nn.init.xavier_uniform_(self.distmult, gain=nn.init.calculate_gain('relu'))
+        self.bilin_score = BiLinearPredictor(num_rel, hid_dim)
 
 
     def comp_edge_norm(self, g):
@@ -57,9 +58,6 @@ class RGCN(nn.Module):
 
     def get_loss(self, embed, triplets, labels):
         #distmult
-        s = embed[triplets[:,0]]
-        r = self.distmult[triplets[:,1]]
-        o = embed[triplets[:,2]]
-        score = torch.sum(s * r * o, dim=1)
+        score = self.bilin_score(embed, triplets)
         predict_loss = F.binary_cross_entropy_with_logits(score, labels)
         return predict_loss
