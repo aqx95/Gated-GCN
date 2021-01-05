@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from convnet.gatedgcn import GatedGCNLayer
-from Bilinear_Pred import BiLinearPredictor
+from model.Bilinear_Pred import BiLinearPredictor
 
 class GatedGCN(nn.Module):
     def __init__(self, in_dim, in_dim_edge, hid_dim, out_dim, n_hidden_layers,
@@ -49,6 +49,6 @@ class GatedGCN(nn.Module):
 
     def get_loss(self, embed, triplets, labels):
         #distmult
-        score = self.bilin_score(embed, triplets) 
+        score = self.bilin_score(embed, triplets)
         predict_loss = F.binary_cross_entropy_with_logits(score, labels)
         return predict_loss
