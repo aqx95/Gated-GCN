@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from convnet.relg import RELGLayer
-from Bilinear_Pred import BiLinearPredictor
+from model.Bilinear_Pred import BiLinearPredictor
 
 class RELG(nn.Module):
     def __init__(self, in_dim, in_dim_edge, hid_dim, out_dim, n_hidden_layers,
