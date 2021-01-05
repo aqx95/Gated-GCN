@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from dgl.nn import RelGraphConv
-from Bilinear_Pred import BiLinearPredictor
+from model.Bilinear_Pred import BiLinearPredictor
 
 class RGCN(nn.Module):
     def __init__(self, in_dim, hid_dim, out_dim, n_layers, num_rel, dropout):
@@ -19,7 +19,7 @@ class RGCN(nn.Module):
 
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
         self.layers = nn.ModuleList([RelGraphConv(
-                                    hid_dim, hid_dim, num_rel, regularizer='bdd',
+                                    hid_dim, hid_dim, num_rel, regularizer='basis',
                                     num_bases=None,low_mem=True, dropout=self.dropout)
                                     for _ in range(n_layers)])
 
