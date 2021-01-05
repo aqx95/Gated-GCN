@@ -2,7 +2,9 @@ import dgl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from convnet.gatedgcn import GatedGCNLayer
+from Bilinear_Pred import BiLinearPredictor
 
 class GatedGCN(nn.Module):
     def __init__(self, in_dim, in_dim_edge, hid_dim, out_dim, n_hidden_layers,
@@ -21,12 +23,11 @@ class GatedGCN(nn.Module):
         self.linear_h = nn.Linear(in_dim, hid_dim)
         self.linear_e = nn.Linear(in_dim_edge, hid_dim)
 
-        self.layers = nn.ModuleList([GatedGCNLayer(hid_dim, out_dim, dropout,
+        self.layers = nn.ModuleList([GatedGCNLayer(hid_dim, hid_dim, dropout,
                                                     self.graph_norm, self.batch_norm,
                                                     self.residual) for _ in range(self.n_layers)])
 
-        self.distmult = nn.Parameter(torch.Tensor(self.in_dim_edge, hid_dim))
-        nn.init.xavier_uniform_(self.distmult, gain=nn.init.calculate_gain('relu'))
+        self.bilin_score = BiLinearPredictor(in_dim_edge, hid_dim)
 
         self.h_embedding = nn.Embedding(in_dim, hid_dim)
         self.e_embedding = nn.Embedding(in_dim_edge, hid_dim)
@@ -48,9 +49,6 @@ class GatedGCN(nn.Module):
 
     def get_loss(self, embed, triplets, labels):
         #distmult
-        s = embed[triplets[:,0]]
-        r = self.distmult[triplets[:,1]]
-        o = embed[triplets[:,2]]
-        score = torch.sum(s * r * o, dim=1)
+        score = self.bilin_score(embed, triplets) 
         predict_loss = F.binary_cross_entropy_with_logits(score, labels)
         return predict_loss
